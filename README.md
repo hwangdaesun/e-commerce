@@ -289,6 +289,18 @@ participant CouponRepo as CouponRepository
         Note over CartService: ✅ 커밋
 
         Note over OrderFacade: 🔄 비동기 이벤트 발행
-        OrderFacade-->>OrderHistoryService: 외부 데이터 플랫폼 전송
+        OrderFacade-->>OrderHistoryService: 외부 데이터 플랫폼 전송 이벤트 발행
+
+        Note over OrderHistoryService: 🔄 비동기 이벤트 처리
+        Note over OrderHistoryService: 🔒 별도 트랜잭션
+        OrderHistoryService->>OrderHistoryService: 외부 데이터 플랫폼 전송
+        alt 전송 성공
+            OrderHistoryService->>OrderService: 주문 전송 상태 변경 (SUCCESS)
+            OrderService-->>OrderHistoryService: 상태 변경 완료
+            Note over OrderHistoryService: ✅ 커밋
+        else 전송 실패
+            Note over OrderHistoryService: ❌ 롤백
+            Note over OrderHistoryService: 재시도 로직 또는 실패 처리
+        end
 
 ```
