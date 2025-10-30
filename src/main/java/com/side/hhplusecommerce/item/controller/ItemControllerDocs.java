@@ -2,6 +2,7 @@ package com.side.hhplusecommerce.item.controller;
 
 import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
+import com.side.hhplusecommerce.item.controller.dto.PopularItemsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -34,5 +35,16 @@ public interface ItemControllerDocs {
     ResponseEntity<ItemResponse> getItem(
             @Parameter(description = "조회할 상품 ID", required = true)
             Long itemId
+    );
+
+    @Operation(summary = "인기 상품 조회", description = "최근 3일간 판매량 기준 상위 상품을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    ResponseEntity<PopularItemsResponse> getPopularItems(
+            @Parameter(description = "조회할 상품 수 (기본값: 5, 최대: 10)")
+            Integer limit
     );
 }
