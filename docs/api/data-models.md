@@ -75,6 +75,9 @@
 - `orderId`: Long (PK)
 - `userId`: Long
 - `status`: String (주문 상태 - PENDING, PAID, FAILED)
+- `totalAmount`: Integer (총 상품 금액)
+- `couponDiscount`: Integer (쿠폰 할인 금액, 0 if not used)
+- `finalAmount`: Integer (최종 결제 금액 - 쿠폰 적용 후)
 - `orderedAt`: DateTime (주문일시)
 
 #### OrderItem (주문 항목)
@@ -169,6 +172,10 @@
   - PENDING: 주문 생성 (결제 대기)
   - PAID: 결제 완료
   - FAILED: 주문 실패 (재고 부족, 잔액 부족 등)
+- 주문 당시의 금액 정보를 스냅샷으로 저장
+  - `totalAmount`: 총 상품 금액
+  - `couponDiscount`: 쿠폰 할인 금액 (쿠폰 미사용 시 0)
+  - `finalAmount`: 최종 결제 금액 (쿠폰 적용 후)
 
 **OrderItem (주문 항목)**
 - 주문에 포함된 상품 정보
