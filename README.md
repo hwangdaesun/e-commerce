@@ -89,6 +89,8 @@ sequenceDiagram
       end
 ```
 
+단순 조회를 사용하여 실시간으로 재고 확인.
+
 ### 2.1 장바구니 상품 추가 (POST /api/cart/items)
 
 ```mermaid
