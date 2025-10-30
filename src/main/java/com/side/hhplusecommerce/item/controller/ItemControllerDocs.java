@@ -1,5 +1,6 @@
 package com.side.hhplusecommerce.item.controller;
 
+import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,4 +25,14 @@ public interface ItemControllerDocs {
             Integer size
     );
 
+    @Operation(summary = "상품 상세 조회", description = "특정 상품의 상세 정보를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 상품"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    ResponseEntity<ItemResponse> getItem(
+            @Parameter(description = "조회할 상품 ID", required = true)
+            Long itemId
+    );
 }

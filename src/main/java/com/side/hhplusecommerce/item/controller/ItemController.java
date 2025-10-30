@@ -1,6 +1,9 @@
 package com.side.hhplusecommerce.item.controller;
 
+import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -29,4 +32,19 @@ public class ItemController implements ItemControllerDocs {
         return ResponseEntity.ok(response);
     }
 
+    @Override
+    @GetMapping("/{itemId}")
+    public ResponseEntity<ItemResponse> getItem(
+            @PathVariable Long itemId
+    ) {
+        // Mock 데이터
+        ItemResponse response = new ItemResponse(
+                1L,
+                "기본 티셔츠",
+                29000,
+                50,
+                LocalDateTime.now()
+        );
+        return ResponseEntity.ok(response);
+    }
 }
