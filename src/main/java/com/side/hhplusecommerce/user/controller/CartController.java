@@ -2,14 +2,13 @@ package com.side.hhplusecommerce.user.controller;
 
 import com.side.hhplusecommerce.user.controller.dto.CartItemRequest;
 import com.side.hhplusecommerce.user.controller.dto.CartItemResponse;
-import java.time.LocalDateTime;
 import com.side.hhplusecommerce.user.controller.dto.CartResponse;
+import com.side.hhplusecommerce.user.controller.dto.UpdateCartItemRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -45,6 +44,26 @@ public class CartController implements CartControllerDocs {
         CartResponse.Summary summary = new CartResponse.Summary(2, 3, 117000);
         CartResponse response = new CartResponse(items, summary);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @PatchMapping("/items/{cartItemId}")
+    public ResponseEntity<CartItemResponse> updateCartItemQuantity(
+            @PathVariable Long cartItemId,
+            @RequestBody UpdateCartItemRequest request
+    ) {
+        // Mock 데이터
+        CartItemResponse response = new CartItemResponse(
+                1L,
+                1L,
+                "기본 티셔츠",
+                29000,
+                5,
+                145000,
+                50,
+                LocalDateTime.now()
+        );
         return ResponseEntity.ok(response);
     }
 }

@@ -3,6 +3,7 @@ package com.side.hhplusecommerce.user.controller;
 import com.side.hhplusecommerce.user.controller.dto.CartItemRequest;
 import com.side.hhplusecommerce.user.controller.dto.CartItemResponse;
 import com.side.hhplusecommerce.user.controller.dto.CartResponse;
+import com.side.hhplusecommerce.user.controller.dto.UpdateCartItemRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,5 +33,19 @@ public interface CartControllerDocs {
     ResponseEntity<CartResponse> getCart(
             @Parameter(description = "사용자 ID", required = true)
             Long userId
+    );
+
+    @Operation(summary = "장바구니 수량 수정", description = "장바구니 항목의 수량을 수정합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 장바구니 항목"),
+            @ApiResponse(responseCode = "409", description = "재고 부족"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    ResponseEntity<CartItemResponse> updateCartItemQuantity(
+            @Parameter(description = "장바구니 항목 ID", required = true)
+            Long cartItemId,
+            @RequestBody UpdateCartItemRequest request
     );
 }
