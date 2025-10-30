@@ -17,7 +17,7 @@ public class CartController implements CartControllerDocs {
     @Override
     @PostMapping("/items")
     public ResponseEntity<CartItemResponse> addCartItem(@RequestBody CartItemRequest request) {
-
+        // Mock 데이터
         CartItemResponse response = new CartItemResponse(
                 1L,
                 1L,
