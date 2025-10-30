@@ -1,17 +1,13 @@
 package com.side.hhplusecommerce.item.controller;
 
 import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
+import com.side.hhplusecommerce.item.controller.dto.ItemStockResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
 import com.side.hhplusecommerce.item.controller.dto.PopularItemsResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/items")
@@ -62,6 +58,16 @@ public class ItemController implements ItemControllerDocs {
         );
 
         PopularItemsResponse response = new PopularItemsResponse(popularItems);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    @GetMapping("/{itemId}/stock")
+    public ResponseEntity<ItemStockResponse> getItemStock(
+            @PathVariable Long itemId
+    ) {
+        // Mock 데이터
+        ItemStockResponse response = new ItemStockResponse(1L, "기본 티셔츠", 50);
         return ResponseEntity.ok(response);
     }
 }

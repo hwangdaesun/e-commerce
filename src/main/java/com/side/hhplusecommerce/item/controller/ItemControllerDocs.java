@@ -1,6 +1,7 @@
 package com.side.hhplusecommerce.item.controller;
 
 import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
+import com.side.hhplusecommerce.item.controller.dto.ItemStockResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
 import com.side.hhplusecommerce.item.controller.dto.PopularItemsResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,5 +47,16 @@ public interface ItemControllerDocs {
     ResponseEntity<PopularItemsResponse> getPopularItems(
             @Parameter(description = "조회할 상품 수 (기본값: 5, 최대: 10)")
             Integer limit
+    );
+
+    @Operation(summary = "상품 재고 확인", description = "특정 상품의 실시간 재고를 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 상품"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    ResponseEntity<ItemStockResponse> getItemStock(
+            @Parameter(description = "상품 ID", required = true)
+            Long itemId
     );
 }
