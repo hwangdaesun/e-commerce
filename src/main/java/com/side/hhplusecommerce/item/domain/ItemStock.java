@@ -1,5 +1,6 @@
 package com.side.hhplusecommerce.item.domain;
 
+import com.side.hhplusecommerce.item.exception.InsufficientStockException;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -19,8 +20,8 @@ public class ItemStock {
     }
 
     public void decrease(Integer quantity) {
-        if (this.stock >= quantity) {
-            throw new IllegalArgumentException("재고가 부족합니다.");
+        if (this.stock < quantity) {
+            throw new InsufficientStockException();
         }
         this.stock -= quantity;
         this.updatedAt = LocalDateTime.now();
