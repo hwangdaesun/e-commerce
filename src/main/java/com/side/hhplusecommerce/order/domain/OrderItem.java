@@ -66,5 +66,9 @@ public class OrderItem {
         }
     }
 
+    // 쿠폰 적용 전
+    public Integer calculateItemTotalPrice() {
+        return price * quantity;
+    }
 
 }

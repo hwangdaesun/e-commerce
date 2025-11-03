@@ -117,4 +117,23 @@ class OrderItemTest {
                 .hasMessage(ErrorCode.INVALID_ORDER_ITEM_PRICE.getMessage());
     }
 
+    @Test
+    @DisplayName("항목별 총액을 정확하게 계산한다")
+    void calculateItemTotalPrice_success() {
+        // given
+        Long orderId = 1L;
+        Long itemId = 100L;
+        String name = "상품명";
+        Integer price = 10000;
+        Integer quantity = 3;
+        Long userCouponId = null;
+
+        OrderItem orderItem = OrderItem.create(orderId, itemId, name, price, quantity, userCouponId);
+
+        // when
+        Integer totalPrice = orderItem.calculateItemTotalPrice();
+
+        // then
+        assertThat(totalPrice).isEqualTo(30000);
+    }
 }
