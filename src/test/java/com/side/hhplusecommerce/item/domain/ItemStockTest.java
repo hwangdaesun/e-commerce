@@ -23,4 +23,19 @@ class ItemStockTest {
         // 재고가 차감되지 않았는지 확인
         assertThat(itemStock.getStock()).isEqualTo(5);
     }
+
+
+    @Test
+    @DisplayName("재고를 정상적으로 증가시킨다")
+    void increase_success() {
+        // given
+        ItemStock itemStock = ItemStock.of(1L, 10);
+
+        // when
+        itemStock.increase(5);
+
+        // then
+        assertThat(itemStock.getStock()).isEqualTo(15);
+    }
+
 }

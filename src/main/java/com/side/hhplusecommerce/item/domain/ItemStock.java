@@ -34,6 +34,12 @@ public class ItemStock {
         this.stock -= quantity;
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void increase(Integer quantity) {
+        this.stock += quantity;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public boolean hasEnoughQuantity(Integer quantity) {
         return this.stock >= quantity;
     }
