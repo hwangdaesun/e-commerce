@@ -28,10 +28,14 @@ public class ItemStock {
     }
 
     public void decrease(Integer quantity) {
-        if (this.stock < quantity) {
+        if (!hasEnoughQuantity(quantity)) {
             throw new InsufficientStockException();
         }
         this.stock -= quantity;
         this.updatedAt = LocalDateTime.now();
     }
+    public boolean hasEnoughQuantity(Integer quantity) {
+        return this.stock >= quantity;
+    }
+
 }
