@@ -71,4 +71,8 @@ public class OrderItem {
         return price * quantity;
     }
 
+    public boolean hasCoupon() {
+        return Objects.nonNull(userCouponId);
+    }
+
 }

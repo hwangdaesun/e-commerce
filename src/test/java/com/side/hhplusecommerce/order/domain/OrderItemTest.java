@@ -136,4 +136,45 @@ class OrderItemTest {
         // then
         assertThat(totalPrice).isEqualTo(30000);
     }
+
+    @Test
+    @DisplayName("쿠폰이 적용된 경우 true를 반환한다")
+    void hasCoupon_true() {
+        // given
+        Long orderId = 1L;
+        Long itemId = 100L;
+        String name = "상품명";
+        Integer price = 10000;
+        Integer quantity = 2;
+        Long userCouponId = 5L;
+
+        OrderItem orderItem = OrderItem.create(orderId, itemId, name, price, quantity, userCouponId);
+
+        // when
+        boolean hasCoupon = orderItem.hasCoupon();
+
+        // then
+        assertThat(hasCoupon).isTrue();
+    }
+
+    @Test
+    @DisplayName("쿠폰이 적용되지 않은 경우 false를 반환한다")
+    void hasCoupon_false() {
+        // given
+        Long orderId = 1L;
+        Long itemId = 100L;
+        String name = "상품명";
+        Integer price = 10000;
+        Integer quantity = 2;
+        Long userCouponId = null;
+
+        OrderItem orderItem = OrderItem.create(orderId, itemId, name, price, quantity, userCouponId);
+
+        // when
+        boolean hasCoupon = orderItem.hasCoupon();
+
+        // then
+        assertThat(hasCoupon).isFalse();
+    }
+
 }
