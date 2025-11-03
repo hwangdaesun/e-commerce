@@ -1,6 +1,8 @@
 package com.side.hhplusecommerce.order.domain;
 
 import com.side.hhplusecommerce.common.BaseEntity;
+import com.side.hhplusecommerce.order.exception.InvalidCouponDiscountException;
+import com.side.hhplusecommerce.order.exception.InvalidOrderAmountException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,6 +25,29 @@ public class Order extends BaseEntity {
         this.totalAmount = totalAmount;
         this.couponDiscount = couponDiscount;
         this.finalAmount = finalAmount;
+    }
+
+    public static Order create(Long orderId, Long userId, Integer totalAmount, Integer couponDiscount) {
+        validateAmounts(totalAmount, couponDiscount);
+        Integer finalAmount = totalAmount - couponDiscount;
+
+        return Order.builder()
+                .orderId(orderId)
+                .userId(userId)
+                .status(OrderStatus.PENDING)
+                .totalAmount(totalAmount)
+                .couponDiscount(couponDiscount)
+                .finalAmount(finalAmount)
+                .build();
+    }
+
+    private static void validateAmounts(Integer totalAmount, Integer couponDiscount) {
+        if (totalAmount < 0) {
+            throw new InvalidOrderAmountException();
+        }
+        if (couponDiscount < 0) {
+            throw new InvalidCouponDiscountException();
+        }
     }
 
 }
