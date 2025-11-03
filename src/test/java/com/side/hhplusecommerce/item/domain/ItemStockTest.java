@@ -13,10 +13,7 @@ class ItemStockTest {
     @DisplayName("재고가 부족할 경우 재고 차감을 하지 않고 예외를 발생시킨다")
     void decrease_fail_insufficient_stock() {
         // given
-        ItemStock itemStock = ItemStock.builder()
-                .itemId(1L)
-                .stock(5)
-                .build();
+        ItemStock itemStock = ItemStock.of(1L, 5);
 
         // when & then
         assertThatThrownBy(() -> itemStock.decrease(10))
