@@ -2,6 +2,8 @@ package com.side.hhplusecommerce.order.domain;
 
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemItemIdException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemOrderIdException;
+import com.side.hhplusecommerce.order.exception.InvalidOrderItemPriceException;
+import com.side.hhplusecommerce.order.exception.InvalidOrderItemQuantityException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +33,8 @@ public class OrderItem {
 
     public static OrderItem create(Long orderId, Long itemId, String name, Integer price, Integer quantity, Long userCouponId) {
         validateReferentialIntegrity(orderId, itemId);
+        validateQuantity(quantity);
+        validatePrice(price);
         return OrderItem.builder()
                 .orderId(orderId)
                 .itemId(itemId)
@@ -47,6 +51,18 @@ public class OrderItem {
         }
         if (Objects.isNull(itemId)) {
             throw new InvalidOrderItemItemIdException();
+        }
+    }
+
+    private static void validateQuantity(Integer quantity) {
+        if (Objects.isNull(quantity) || quantity < 1) {
+            throw new InvalidOrderItemQuantityException();
+        }
+    }
+
+    private static void validatePrice(Integer price) {
+        if (Objects.isNull(price) || price < 0) {
+            throw new InvalidOrderItemPriceException();
         }
     }
 
