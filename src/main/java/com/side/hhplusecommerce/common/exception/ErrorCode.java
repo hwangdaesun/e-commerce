@@ -28,6 +28,8 @@ public enum ErrorCode {
 
     // Cart
     INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST);
+    INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
+
 
     private final String code;
     private final String message;
