@@ -64,4 +64,17 @@ class OrderTest {
         assertThat(order.getCouponDiscount()).isEqualTo(couponDiscount);
     }
 
+    @Test
+    @DisplayName("PENDING 상태의 주문을 결제 완료 처리할 수 있다")
+    void complete_pay_from_pending() {
+        // given
+        Order order = Order.create(1L, 1L, 10000, 0);
+
+        // when
+        order.completePay();
+
+        // then
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    }
+
 }

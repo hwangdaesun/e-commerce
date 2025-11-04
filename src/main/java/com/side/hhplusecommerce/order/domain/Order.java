@@ -55,4 +55,8 @@ public class Order extends BaseEntity {
         }
     }
 
+    public void completePay() {
+        this.status = OrderStatus.PAID;
+    }
+
 }
