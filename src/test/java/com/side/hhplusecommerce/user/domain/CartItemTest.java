@@ -90,4 +90,19 @@ class CartItemTest {
                 .isInstanceOf(InvalidCartItemQuantityException.class)
                 .hasMessage(ErrorCode.INVALID_CART_ITEM_QUANTITY.getMessage());
     }
+
+    @Test
+    @DisplayName("장바구니 항목의 총액을 계산한다")
+    void calculateTotalPrice() {
+        // given
+        CartItem cartItem = CartItem.create(1L, 1L, 3);
+        Integer itemPrice = 10000;
+
+        // when
+        Integer totalPrice = cartItem.calculateTotalPrice(itemPrice);
+
+        // then
+        assertThat(totalPrice).isEqualTo(30000);
+    }
+
 }

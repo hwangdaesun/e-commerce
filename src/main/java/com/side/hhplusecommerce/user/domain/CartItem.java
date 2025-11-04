@@ -41,4 +41,8 @@ public class CartItem extends BaseEntity {
         validateQuantity(quantity);
         this.quantity = quantity;
     }
+
+    public Integer calculateTotalPrice(Integer itemPrice) {
+        return itemPrice * this.quantity;
+    }
 }
