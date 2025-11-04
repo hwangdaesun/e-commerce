@@ -18,8 +18,7 @@ public enum ErrorCode {
     INVALID_ORDER_ITEM_ORDER_ID("ORDER_003", "orderId는 필수입니다.", HttpStatus.BAD_REQUEST),
     INVALID_ORDER_ITEM_ITEM_ID("ORDER_004", "itemId는 필수입니다.", HttpStatus.BAD_REQUEST),
     INVALID_ORDER_ITEM_QUANTITY("ORDER_005", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
-    INVALID_ORDER_ITEM_PRICE("ORDER_006", "가격은 0원 이상이어야 합니다.", HttpStatus.BAD_REQUEST);
-    ALREADY_PAID_ORDER("ORDER_007", "이미 결제가 완료된 주문입니다.", HttpStatus.BAD_REQUEST);
+    INVALID_ORDER_ITEM_PRICE("ORDER_006", "가격은 0원 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
     ALREADY_PAID_ORDER("ORDER_007", "이미 결제가 완료된 주문입니다.", HttpStatus.BAD_REQUEST),
 
     COUPON_SOLD_OUT("COUPON_001", "쿠폰이 모두 소진되었습니다.", HttpStatus.CONFLICT);
