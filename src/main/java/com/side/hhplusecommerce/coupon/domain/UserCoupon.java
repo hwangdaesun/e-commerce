@@ -1,9 +1,12 @@
 package com.side.hhplusecommerce.coupon.domain;
 
-import java.time.LocalDateTime;
+import com.side.hhplusecommerce.coupon.exception.AlreadyUsedCouponException;
+import com.side.hhplusecommerce.coupon.exception.ExpiredCouponException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDateTime;
 
 @Getter
 public class UserCoupon {
@@ -33,4 +36,18 @@ public class UserCoupon {
                 .build();
     }
 
+    public void use(LocalDateTime expiresAt) {
+        if (Boolean.TRUE.equals(this.isUsed)) {
+            throw new AlreadyUsedCouponException();
+        }
+        if (isExpired(expiresAt)) {
+            throw new ExpiredCouponException();
+        }
+        this.isUsed = true;
+        this.usedAt = LocalDateTime.now();
+    }
+
+    public boolean isExpired(LocalDateTime expiresAt) {
+        return LocalDateTime.now().isAfter(expiresAt);
+    }
 }
