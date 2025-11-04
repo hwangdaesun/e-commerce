@@ -5,6 +5,8 @@ import com.side.hhplusecommerce.order.exception.InvalidCouponDiscountException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderAmountException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -39,4 +41,27 @@ class OrderTest {
                 .isInstanceOf(InvalidCouponDiscountException.class)
                 .hasMessage(ErrorCode.INVALID_COUPON_DISCOUNT.getMessage());
     }
+
+    @ParameterizedTest(name = "총액={0}, 할인={1} -> 최종금액={2}")
+    @CsvSource({
+            "10000, 0, 10000",      // 쿠폰 할인 없음
+            "10000, 2000, 8000",    // 정상 할인 적용
+            "5000, 10000, 0",       // 할인 금액이 총액보다 큼
+            "10000, 10000, 0"       // 할인 금액과 총액이 같음
+    })
+    @DisplayName("주문 최종 금액이 올바르게 계산된다")
+    void calculate_final_amount(Integer totalAmount, Integer couponDiscount, Integer expectedFinalAmount) {
+        // given
+        Long orderId = 1L;
+        Long userId = 1L;
+
+        // when
+        Order order = Order.create(orderId, userId, totalAmount, couponDiscount);
+
+        // then
+        assertThat(order.getFinalAmount()).isEqualTo(expectedFinalAmount);
+        assertThat(order.getTotalAmount()).isEqualTo(totalAmount);
+        assertThat(order.getCouponDiscount()).isEqualTo(couponDiscount);
+    }
+
 }

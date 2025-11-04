@@ -29,7 +29,7 @@ public class Order extends BaseEntity {
 
     public static Order create(Long orderId, Long userId, Integer totalAmount, Integer couponDiscount) {
         validateAmounts(totalAmount, couponDiscount);
-        Integer finalAmount = totalAmount - couponDiscount;
+        Integer finalAmount = calculateFinalAmount(totalAmount, couponDiscount);
 
         return Order.builder()
                 .orderId(orderId)
@@ -39,6 +39,11 @@ public class Order extends BaseEntity {
                 .couponDiscount(couponDiscount)
                 .finalAmount(finalAmount)
                 .build();
+    }
+
+    private static Integer calculateFinalAmount(Integer totalAmount, Integer couponDiscount) {
+        Integer result = totalAmount - couponDiscount;
+        return Math.max(result, 0);
     }
 
     private static void validateAmounts(Integer totalAmount, Integer couponDiscount) {
