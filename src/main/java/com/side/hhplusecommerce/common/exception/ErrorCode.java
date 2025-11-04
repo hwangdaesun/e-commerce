@@ -30,7 +30,9 @@ public enum ErrorCode {
     INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST);
     INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
 
+    // User
     INVALID_POINT_AMOUNT("USER_001", "포인트 금액은 1 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
+    INSUFFICIENT_POINT("USER_002", "포인트가 부족합니다.", HttpStatus.CONFLICT);
 
     private final String code;
     private final String message;
