@@ -1,6 +1,7 @@
 package com.side.hhplusecommerce.order.domain;
 
 import com.side.hhplusecommerce.common.exception.ErrorCode;
+import com.side.hhplusecommerce.order.exception.AlreadyPaidOrderException;
 import com.side.hhplusecommerce.order.exception.InvalidCouponDiscountException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderAmountException;
 import org.junit.jupiter.api.DisplayName;
@@ -75,6 +76,19 @@ class OrderTest {
 
         // then
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    }
+
+    @Test
+    @DisplayName("PAID 상태의 주문은 다시 결제 완료 처리할 수 없다")
+    void complete_pay_from_paid_fails() {
+        // given
+        Order order = Order.create(1L, 1L, 10000, 0);
+        order.completePay();
+
+        // when & then
+        assertThatThrownBy(order::completePay)
+                .isInstanceOf(AlreadyPaidOrderException.class)
+                .hasMessage(ErrorCode.ALREADY_PAID_ORDER.getMessage());
     }
 
 }

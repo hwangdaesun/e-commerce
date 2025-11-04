@@ -1,6 +1,7 @@
 package com.side.hhplusecommerce.order.domain;
 
 import com.side.hhplusecommerce.common.BaseEntity;
+import com.side.hhplusecommerce.order.exception.AlreadyPaidOrderException;
 import com.side.hhplusecommerce.order.exception.InvalidCouponDiscountException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderAmountException;
 import lombok.AccessLevel;
@@ -56,6 +57,9 @@ public class Order extends BaseEntity {
     }
 
     public void completePay() {
+        if (this.status.equals(OrderStatus.PAID)) {
+            throw new AlreadyPaidOrderException();
+        }
         this.status = OrderStatus.PAID;
     }
 
