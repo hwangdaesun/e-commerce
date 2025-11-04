@@ -91,4 +91,17 @@ class OrderTest {
                 .hasMessage(ErrorCode.ALREADY_PAID_ORDER.getMessage());
     }
 
+    @Test
+    @DisplayName("PENDING 상태의 주문을 실패 처리할 수 있다")
+    void fail_from_pending() {
+        // given
+        Order order = Order.create(1L, 1L, 10000, 0);
+
+        // when
+        order.fail();
+
+        // then
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.FAILED);
+    }
+
 }
