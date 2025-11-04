@@ -1,9 +1,11 @@
 package com.side.hhplusecommerce.coupon.domain;
 
-import java.time.LocalDateTime;
+import com.side.hhplusecommerce.coupon.exception.CouponSoldOutException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+
+import java.time.LocalDateTime;
 
 @Getter
 public class CouponStock {
@@ -23,5 +25,17 @@ public class CouponStock {
                 .couponId(couponId)
                 .remainingQuantity(totalQuantity)
                 .build();
+    }
+
+    public void decrease() {
+        if (!hasRemainingQuantity()) {
+            throw new CouponSoldOutException();
+        }
+        this.remainingQuantity--;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public boolean hasRemainingQuantity() {
+        return this.remainingQuantity > 0;
     }
 }
