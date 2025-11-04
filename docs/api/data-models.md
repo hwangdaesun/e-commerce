@@ -24,13 +24,10 @@
 - `itemId`: Long (PK)
 - `name`: String (상품명)
 - `price`: Integer (가격)
+- `stock`: Integer (재고 수량)
 - `createdAt`: DateTime (생성일시)
 - `updatedAt`: DateTime (수정일시)
 
-#### ItemStock (상품 재고)
-- `itemId`: Long (PK, FK) - Item과 식별 관계
-- `stock`: Integer (재고 수량)
-- `updatedAt`: DateTime (수정일시)
 ---
 
 ### 2.2 사용자 도메인 (User Domain)
@@ -102,9 +99,9 @@
 - `expiresAt`: DateTime (만료일시)
 - `createdAt`: DateTime (생성일시)
 
-#### CouponIssue (쿠폰 발급 수량)
+#### CouponStock (쿠폰 재고)
 - `couponId`: Long (PK, FK) - Coupon과 식별 관계
-- `issuedQuantity`: Integer (발행된 수량)
+- `remainingQuantity`: Integer (남은 발급 가능 수량)
 - `updatedAt`: DateTime (수정일시)
 
 #### UserCoupon (사용자 쿠폰 - 발행 쿠폰)
@@ -123,13 +120,8 @@
 
 **Item (상품)**
 - 시스템의 핵심 판매 상품
-- 상품의 기본 정보(이름, 가격 등)를 관리
-- 재고는 ItemStock 테이블에서 별도 관리
-
-**ItemStock (상품 재고)**
-- 상품별 재고 수량을 관리
-- Item과 1:1 식별 관계 (itemId가 PK이자 FK)
-- 재고 변동이 잦은 특성상 별도 테이블로 분리하여 동시성 제어 최적화
+- 상품의 기본 정보(이름, 가격, 재고)를 통합 관리
+- 재고(`stock`) 필드를 직접 포함하여 동시성 제어 대상
 
 ---
 
@@ -187,16 +179,17 @@
 ### 3.4 쿠폰 도메인
 
 **Coupon (쿠폰)**
-- 시스템에서 발행하는 쿠폰 기본 정보
-- 쿠폰명, 할인 금액, 총 발행 가능 수량 등 관리
-- 정액 할인형 쿠폰 
-- 발행 수량은 CouponIssue 테이블에서 별도 관리
+- 시스템에서 발행하는 쿠폰 기본 정보 (메타데이터)
+- 쿠폰명, 할인 금액, 총 발행 가능 수량, 만료일 등 관리
+- 정액 할인형 쿠폰
+- 실시간 재고는 CouponStock 테이블에서 별도 관리
 
-**CouponIssue (쿠폰 발급 수량)**
-- 쿠폰별 발급된 수량을 관리
+**CouponStock (쿠폰 재고)**
+- 쿠폰별 남은 발급 가능 수량을 관리
 - Coupon과 1:1 식별 관계 (couponId가 PK이자 FK)
 - 선착순 쿠폰 발급 시 동시성 제어를 위해 별도 테이블로 분리
-- `issuedQuantity`와 `totalQuantity` 비교로 발급 가능 여부 판단
+- `remainingQuantity`를 감소시켜 재고 차감 
+- 재고가 0이 되면 쿠폰 발급 불가
 
 **UserCoupon (사용자 쿠폰)**
 - 사용자에게 발행된 쿠폰
