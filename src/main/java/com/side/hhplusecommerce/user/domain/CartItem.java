@@ -1,6 +1,7 @@
 package com.side.hhplusecommerce.user.domain;
 
 import com.side.hhplusecommerce.common.BaseEntity;
+import com.side.hhplusecommerce.user.exception.InvalidCartItemQuantityException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,7 +33,12 @@ public class CartItem extends BaseEntity {
 
     private static void validateQuantity(Integer quantity) {
         if (quantity < 1) {
-            throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
+            throw new InvalidCartItemQuantityException();
         }
+    }
+
+    public void updateQuantity(Integer quantity) {
+        validateQuantity(quantity);
+        this.quantity = quantity;
     }
 }

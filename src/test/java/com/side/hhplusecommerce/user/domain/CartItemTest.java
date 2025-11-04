@@ -1,5 +1,7 @@
 package com.side.hhplusecommerce.user.domain;
 
+import com.side.hhplusecommerce.common.exception.ErrorCode;
+import com.side.hhplusecommerce.user.exception.InvalidCartItemQuantityException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -34,8 +36,8 @@ class CartItemTest {
 
         // when & then
         assertThatThrownBy(() -> CartItem.create(cartId, itemId, quantity))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("수량은 1개 이상이어야 합니다.");
+                .isInstanceOf(InvalidCartItemQuantityException.class)
+                .hasMessage(ErrorCode.INVALID_CART_ITEM_QUANTITY.getMessage());
     }
 
     @Test
@@ -48,7 +50,44 @@ class CartItemTest {
 
         // when & then
         assertThatThrownBy(() -> CartItem.create(cartId, itemId, quantity))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("수량은 1개 이상이어야 합니다.");
+                .isInstanceOf(InvalidCartItemQuantityException.class)
+                .hasMessage(ErrorCode.INVALID_CART_ITEM_QUANTITY.getMessage());
+    }
+
+    @Test
+    @DisplayName("장바구니 항목의 수량을 변경한다")
+    void updateQuantity_success() {
+        // given
+        CartItem cartItem = CartItem.create(1L, 1L, 3);
+
+        // when
+        cartItem.updateQuantity(5);
+
+        // then
+        assertThat(cartItem.getQuantity()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("수량을 0으로 변경하면 실패한다")
+    void updateQuantity_fail_zero() {
+        // given
+        CartItem cartItem = CartItem.create(1L, 1L, 3);
+
+        // when & then
+        assertThatThrownBy(() -> cartItem.updateQuantity(0))
+                .isInstanceOf(InvalidCartItemQuantityException.class)
+                .hasMessage(ErrorCode.INVALID_CART_ITEM_QUANTITY.getMessage());
+    }
+
+    @Test
+    @DisplayName("수량을 음수로 변경하면 실패한다")
+    void updateQuantity_fail_negative() {
+        // given
+        CartItem cartItem = CartItem.create(1L, 1L, 3);
+
+        // when & then
+        assertThatThrownBy(() -> cartItem.updateQuantity(-1))
+                .isInstanceOf(InvalidCartItemQuantityException.class)
+                .hasMessage(ErrorCode.INVALID_CART_ITEM_QUANTITY.getMessage());
     }
 }

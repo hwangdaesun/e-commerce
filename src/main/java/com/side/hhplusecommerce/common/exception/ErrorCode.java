@@ -24,7 +24,10 @@ public enum ErrorCode {
     // Coupon
     COUPON_SOLD_OUT("COUPON_001", "쿠폰이 모두 소진되었습니다.", HttpStatus.CONFLICT),
     ALREADY_USED_COUPON("COUPON_002", "이미 사용된 쿠폰입니다.", HttpStatus.BAD_REQUEST),
-    EXPIRED_COUPON("COUPON_003", "만료된 쿠폰입니다.", HttpStatus.BAD_REQUEST);
+    EXPIRED_COUPON("COUPON_003", "만료된 쿠폰입니다.", HttpStatus.BAD_REQUEST),
+
+    // Cart
+    INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String message;
