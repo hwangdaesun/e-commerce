@@ -43,14 +43,7 @@ public class ItemController implements ItemControllerDocs {
     public ResponseEntity<PopularItemsResponse> getPopularItems(
             @RequestParam(defaultValue = "5") Integer limit
     ) {
-        // Mock 데이터
-        List<PopularItemsResponse.PopularItem> popularItems = List.of(
-                new PopularItemsResponse.PopularItem(1, 1L, "기본 티셔츠", 29000, 50),
-                new PopularItemsResponse.PopularItem(2, 2L, "청바지", 59000, 30),
-                new PopularItemsResponse.PopularItem(3, 3L, "후드티", 45000, 20)
-        );
-
-        PopularItemsResponse response = new PopularItemsResponse(popularItems);
+        PopularItemsResponse response = itemViewUseCase.viewPopular(limit);
         return ResponseEntity.ok(response);
     }
 

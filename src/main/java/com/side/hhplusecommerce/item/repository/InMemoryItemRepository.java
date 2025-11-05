@@ -3,6 +3,7 @@ package com.side.hhplusecommerce.item.repository;
 import com.side.hhplusecommerce.item.domain.Item;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,19 @@ public class InMemoryItemRepository implements ItemRepository {
                         .thenComparing(Comparator.comparing(Item::getItemId).reversed()))
                 .filter(item -> cursor == null || item.getItemId() < cursor)
                 .limit(size + 1)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Item> findPopularItems(Integer limit, LocalDateTime after) {
+        return store.values().stream().toList();
+    }
+
+    @Override
+    public List<Item> findAllByIds(List<Long> itemIds) {
+        return itemIds.stream()
+                .map(store::get)
+                .filter(item -> item != null)
                 .collect(Collectors.toList());
     }
 }
