@@ -2,6 +2,8 @@ package com.side.hhplusecommerce.item.domain;
 
 import com.side.hhplusecommerce.common.BaseEntity;
 import com.side.hhplusecommerce.item.exception.InsufficientStockException;
+import com.side.hhplusecommerce.item.exception.InvalidSalesQuantityException;
+import java.util.Objects;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -36,5 +38,12 @@ public class Item extends BaseEntity {
 
     public boolean hasEnoughQuantity(Integer quantity) {
         return this.stock >= quantity;
+    }
+
+    public void increaseSalesCount(Integer quantity) {
+        if (Objects.isNull(quantity) || quantity <= 0) {
+            throw new InvalidSalesQuantityException();
+        }
+        this.salesCount += quantity;
     }
 }

@@ -12,6 +12,7 @@ public enum ErrorCode {
     ITEM_NOT_FOUND("ITEM_000", "상품을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INSUFFICIENT_STOCK("ITEM_001", "재고가 부족합니다.", HttpStatus.CONFLICT),
     INVALID_STOCK_QUANTITY("ITEM_002", "차감할 수량은 1 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
+    INVALID_SALES_QUANTITY("ITEM_003", "판매 수량은 1 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
 
     // Order
     INVALID_ORDER_AMOUNT("ORDER_001", "주문 금액은 0 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
