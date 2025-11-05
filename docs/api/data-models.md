@@ -25,8 +25,15 @@
 - `name`: String (상품명)
 - `price`: Integer (가격)
 - `stock`: Integer (재고 수량)
+- `salesCount`: Integer (판매량)
 - `createdAt`: DateTime (생성일시)
 - `updatedAt`: DateTime (수정일시)
+
+#### ItemView (상품 조회 이력)
+- `itemViewId`: Long (PK)
+- `itemId`: Long (상품 ID)
+- `userId`: Long (조회한 사용자 ID, nullable)
+- `createdAt`: DateTime (조회일시)
 
 ---
 
