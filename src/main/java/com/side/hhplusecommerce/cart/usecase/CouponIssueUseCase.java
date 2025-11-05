@@ -3,6 +3,7 @@ package com.side.hhplusecommerce.cart.usecase;
 import com.side.hhplusecommerce.common.exception.CustomException;
 import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.coupon.domain.Coupon;
+import com.side.hhplusecommerce.coupon.domain.CouponIssueValidator;
 import com.side.hhplusecommerce.coupon.domain.CouponStock;
 import com.side.hhplusecommerce.coupon.domain.UserCoupon;
 import com.side.hhplusecommerce.coupon.repository.CouponRepository;
@@ -21,6 +22,7 @@ public class CouponIssueUseCase {
     private final CouponRepository couponRepository;
     private final CouponStockRepository couponStockRepository;
     private final UserCouponRepository userCouponRepository;
+    private final CouponIssueValidator couponIssueValidator;
 
     public IssueCouponResponse issue(Long couponId, Long userId) {
         Coupon coupon = couponRepository.findById(couponId)
@@ -31,12 +33,7 @@ public class CouponIssueUseCase {
         }
 
         List<UserCoupon> userCoupons = userCouponRepository.findByUserId(userId);
-        boolean alreadyIssued = userCoupons.stream()
-                .anyMatch(userCoupon -> userCoupon.getCouponId().equals(couponId));
-
-        if (alreadyIssued) {
-            throw new CustomException(ErrorCode.ALREADY_ISSUED_COUPON);
-        }
+        couponIssueValidator.validateNotAlreadyIssued(couponId, userCoupons);
 
         CouponStock couponStock = couponStockRepository.findByCouponId(couponId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
