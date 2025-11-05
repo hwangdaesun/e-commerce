@@ -9,4 +9,5 @@ public interface CartItemRepository {
     CartItem save(CartItem cartItem);
     List<CartItem> findByCartId(Long cartId);
     Optional<CartItem> findById(Long cartItemId);
+    List<CartItem> findByIdIn(List<Long> cartItemIds);
 }

@@ -22,13 +22,10 @@ public class CartUpdateUseCase {
     private final CartItemValidator cartItemValidator;
 
     public CartItemResponse update(Long cartItemId, Long userId, Integer quantity) {
+        cartItemValidator.validateOwnership(userId, cartItemId);
+
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CART_ITEM_NOT_FOUND));
-
-        Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CART_ITEM_NOT_FOUND));
-
-        cartItemValidator.validateOwnership(cartItem, cart);
 
         Item item = itemRepository.findById(cartItem.getItemId())
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));

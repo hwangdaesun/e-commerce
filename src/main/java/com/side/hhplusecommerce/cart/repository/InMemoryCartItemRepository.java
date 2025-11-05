@@ -43,4 +43,12 @@ public class InMemoryCartItemRepository implements CartItemRepository {
     public Optional<CartItem> findById(Long cartItemId) {
         return Optional.ofNullable(store.get(cartItemId));
     }
+
+    @Override
+    public List<CartItem> findByIdIn(List<Long> cartItemIds) {
+        return cartItemIds.stream()
+                .map(store::get)
+                .filter(Objects::nonNull)
+                .toList();
+    }
 }
