@@ -45,6 +45,21 @@ public class OrderItem {
                 .build();
     }
 
+    public static OrderItem createWithId(Long orderItemId, Long orderId, Long itemId, String name, Integer price, Integer quantity, Long userCouponId) {
+        validateReferentialIntegrity(orderId, itemId);
+        validateQuantity(quantity);
+        validatePrice(price);
+        return OrderItem.builder()
+                .orderItemId(orderItemId)
+                .orderId(orderId)
+                .itemId(itemId)
+                .name(name)
+                .price(price)
+                .quantity(quantity)
+                .userCouponId(userCouponId)
+                .build();
+    }
+
     private static void validateReferentialIntegrity(Long orderId, Long itemId) {
         if (Objects.isNull(orderId)) {
             throw new InvalidOrderItemOrderIdException();

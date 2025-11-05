@@ -7,13 +7,16 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Repository
 public class InMemoryItemRepository implements ItemRepository {
     private final Map<Long, Item> store = new ConcurrentHashMap<>();
+    private final AtomicLong idGenerator = new AtomicLong(1);
 
     @Override
     public Optional<Item> findById(Long itemId) {
@@ -41,5 +44,22 @@ public class InMemoryItemRepository implements ItemRepository {
                 .map(store::get)
                 .filter(item -> item != null)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void save(Item item) {
+        if (Objects.isNull(item.getItemId())) {
+            Long id = idGenerator.getAndIncrement();
+            Item newItem = Item.builder()
+                    .itemId(id)
+                    .name(item.getName())
+                    .price(item.getPrice())
+                    .stock(item.getStock())
+                    .salesCount(item.getSalesCount())
+                    .build();
+            store.put(id, newItem);
+        } else {
+            store.put(item.getItemId(), item);
+        }
     }
 }
