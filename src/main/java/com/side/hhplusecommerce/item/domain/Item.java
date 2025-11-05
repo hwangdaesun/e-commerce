@@ -11,14 +11,16 @@ public class Item extends BaseEntity {
     private String name;
     private Integer price;
     private Integer stock;
+    private Integer salesCount;
 
     @Builder
-    private Item(Long itemId, String name, Integer price, Integer stock) {
+    private Item(Long itemId, String name, Integer price, Integer stock, Integer salesCount) {
         super();
         this.itemId = itemId;
         this.name = name;
         this.price = price;
         this.stock = stock;
+        this.salesCount = salesCount != null ? salesCount : 0;
     }
 
     public void decrease(Integer quantity) {
