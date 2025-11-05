@@ -1,7 +1,7 @@
-package com.side.hhplusecommerce.cart.domain;
+package com.side.hhplusecommerce.point.domain;
 
-import com.side.hhplusecommerce.cart.exception.InsufficientPointException;
-import com.side.hhplusecommerce.cart.exception.InvalidPointAmountException;
+import com.side.hhplusecommerce.point.exception.InsufficientPointException;
+import com.side.hhplusecommerce.point.exception.InvalidPointAmountException;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;

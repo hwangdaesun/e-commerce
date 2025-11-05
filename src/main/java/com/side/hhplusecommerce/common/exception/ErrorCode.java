@@ -34,9 +34,9 @@ public enum ErrorCode {
     INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
     CART_ITEM_NOT_FOUND("CART_002", "장바구니 항목을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
-    // User
-    INVALID_POINT_AMOUNT("USER_001", "포인트 금액은 1 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
-    INSUFFICIENT_POINT("USER_002", "포인트가 부족합니다.", HttpStatus.CONFLICT);
+    // Point
+    INVALID_POINT_AMOUNT("Point_001", "포인트 금액은 1 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
+    INSUFFICIENT_POINT("Point_002", "포인트가 부족합니다.", HttpStatus.CONFLICT);
 
     private final String code;
     private final String message;

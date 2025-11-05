@@ -1,4 +1,4 @@
-package com.side.hhplusecommerce.cart.exception;
+package com.side.hhplusecommerce.point.exception;
 
 import com.side.hhplusecommerce.common.exception.CustomException;
 import com.side.hhplusecommerce.common.exception.ErrorCode;

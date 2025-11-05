@@ -1,9 +1,9 @@
-package com.side.hhplusecommerce.cart.domain;
+package com.side.hhplusecommerce.point;
 
-import com.side.hhplusecommerce.cart.domain.UserPoint;
 import com.side.hhplusecommerce.common.exception.ErrorCode;
-import com.side.hhplusecommerce.cart.exception.InsufficientPointException;
-import com.side.hhplusecommerce.cart.exception.InvalidPointAmountException;
+import com.side.hhplusecommerce.point.exception.InsufficientPointException;
+import com.side.hhplusecommerce.point.exception.InvalidPointAmountException;
+import com.side.hhplusecommerce.point.domain.UserPoint;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
