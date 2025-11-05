@@ -1,11 +1,14 @@
 package com.side.hhplusecommerce.user.repository;
 
 import com.side.hhplusecommerce.user.domain.CartItem;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import org.springframework.stereotype.Repository;
 
 @Repository
 public class InMemoryCartItemRepository implements CartItemRepository {
@@ -27,5 +30,17 @@ public class InMemoryCartItemRepository implements CartItemRepository {
         }
         store.put(cartItem.getCartItemId(), cartItem);
         return cartItem;
+    }
+
+    @Override
+    public List<CartItem> findByCartId(Long cartId) {
+        return store.values().stream()
+                .filter(cartItem -> cartItem.getCartId().equals(cartId))
+                .toList();
+    }
+
+    @Override
+    public Optional<CartItem> findById(Long cartItemId) {
+        return Optional.ofNullable(store.get(cartItemId));
     }
 }

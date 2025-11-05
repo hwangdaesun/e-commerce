@@ -1,10 +1,12 @@
 package com.side.hhplusecommerce.user.controller.dto;
 
+import com.side.hhplusecommerce.item.domain.Item;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @AllArgsConstructor
@@ -54,5 +56,33 @@ public class CartResponse {
 
         @Schema(description = "총 결제 금액", example = "117000")
         private Integer totalAmount;
+    }
+
+    public static CartResponse of(List<com.side.hhplusecommerce.user.domain.CartItem> cartItems, Map<Long, Item> itemMap) {
+        List<CartItem> items = cartItems.stream()
+                .map(cartItem -> {
+                    Item item = itemMap.get(cartItem.getItemId());
+                    return new CartItem(
+                            cartItem.getCartItemId(),
+                            item.getItemId(),
+                            item.getName(),
+                            item.getPrice(),
+                            cartItem.getQuantity(),
+                            cartItem.calculateTotalPrice(item.getPrice()),
+                            item.getStock()
+                    );
+                })
+                .toList();
+
+        Integer totalItems = items.size();
+        Integer totalQuantity = items.stream()
+                .mapToInt(CartItem::getQuantity)
+                .sum();
+        Integer totalAmount = items.stream()
+                .mapToInt(CartItem::getTotalPrice)
+                .sum();
+
+        Summary summary = new Summary(totalItems, totalQuantity, totalAmount);
+        return new CartResponse(items, summary);
     }
 }

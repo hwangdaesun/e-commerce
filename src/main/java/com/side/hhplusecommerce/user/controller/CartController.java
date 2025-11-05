@@ -5,19 +5,25 @@ import com.side.hhplusecommerce.user.controller.dto.CartItemResponse;
 import com.side.hhplusecommerce.user.controller.dto.CartResponse;
 import com.side.hhplusecommerce.user.controller.dto.UpdateCartItemRequest;
 import com.side.hhplusecommerce.user.usecase.CartAddUseCase;
+import com.side.hhplusecommerce.user.usecase.CartViewUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
 public class CartController implements CartControllerDocs {
     private final CartAddUseCase cartAddUseCase;
+    private final CartViewUseCase cartViewUseCase;
 
     @Override
     @PostMapping("/items")
@@ -33,15 +39,7 @@ public class CartController implements CartControllerDocs {
     @Override
     @GetMapping
     public ResponseEntity<CartResponse> getCart(@RequestParam Long userId) {
-        // Mock 데이터
-        List<CartResponse.CartItem> items = List.of(
-                new CartResponse.CartItem(1L, 1L, "기본 티셔츠", 29000, 2, 58000, 50),
-                new CartResponse.CartItem(2L, 2L, "청바지", 59000, 1, 59000, 30)
-        );
-
-        CartResponse.Summary summary = new CartResponse.Summary(2, 3, 117000);
-        CartResponse response = new CartResponse(items, summary);
-
+        CartResponse response = cartViewUseCase.view(userId);
         return ResponseEntity.ok(response);
     }
 
