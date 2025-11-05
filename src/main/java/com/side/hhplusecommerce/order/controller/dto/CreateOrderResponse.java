@@ -6,6 +6,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @AllArgsConstructor
@@ -70,5 +71,46 @@ public class CreateOrderResponse {
 
         @Schema(description = "할인 금액", example = "5000")
         private Integer discountAmount;
+    }
+
+    public static CreateOrderResponse of(
+            com.side.hhplusecommerce.order.domain.Order order,
+            List<com.side.hhplusecommerce.order.domain.OrderItem> orderItems,
+            com.side.hhplusecommerce.coupon.domain.Coupon coupon
+    ) {
+        List<OrderItem> items = orderItems.stream()
+                .map(orderItem -> new OrderItem(
+                        orderItem.getOrderItemId(),
+                        orderItem.getItemId(),
+                        orderItem.getName(),
+                        orderItem.getPrice(),
+                        orderItem.getQuantity(),
+                        orderItem.calculateItemTotalPrice()
+                ))
+                .toList();
+
+        CouponUsed couponUsed = null;
+        if (Objects.nonNull(coupon)) {
+            couponUsed = new CouponUsed(
+                    orderItems.stream()
+                            .filter(com.side.hhplusecommerce.order.domain.OrderItem::hasCoupon)
+                            .findFirst()
+                            .map(com.side.hhplusecommerce.order.domain.OrderItem::getUserCouponId)
+                            .orElse(null),
+                    coupon.getName(),
+                    coupon.getDiscountAmount()
+            );
+        }
+
+        return new CreateOrderResponse(
+                order.getOrderId(),
+                items,
+                order.getTotalAmount(),
+                order.getCouponDiscount(),
+                order.getFinalAmount(),
+                order.getFinalAmount(),
+                couponUsed,
+                order.getCreatedAt()
+        );
     }
 }
