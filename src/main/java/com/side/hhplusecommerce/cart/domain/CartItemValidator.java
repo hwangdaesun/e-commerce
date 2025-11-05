@@ -14,7 +14,7 @@ public class CartItemValidator {
     private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
 
-    public void validateOwnership(Long userId, Long cartItemId) {
+    public CartItem validateOwnership(Long userId, Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CART_ITEM_NOT_FOUND));
 
@@ -24,6 +24,7 @@ public class CartItemValidator {
         if (!cartItem.getCartId().equals(cart.getCartId())) {
             throw new CustomException(ErrorCode.NOT_OWNER_OF_CART_ITEM);
         }
+        return cartItem;
     }
 
     public List<CartItem> validateOwnership(Long userId, List<Long> cartItemIds) {

@@ -16,26 +16,22 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class CartUpdateUseCase {
-    private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ItemRepository itemRepository;
     private final CartItemValidator cartItemValidator;
 
     public CartItemResponse update(Long cartItemId, Long userId, Integer quantity) {
-        cartItemValidator.validateOwnership(userId, cartItemId);
+        CartItem validCartItem = cartItemValidator.validateOwnership(userId, cartItemId);
 
-        CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new CustomException(ErrorCode.CART_ITEM_NOT_FOUND));
-
-        Item item = itemRepository.findById(cartItem.getItemId())
+        Item item = itemRepository.findById(validCartItem.getItemId())
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
         if (!item.hasEnoughQuantity(quantity)) {
             throw new CustomException(ErrorCode.INSUFFICIENT_STOCK);
         }
 
-        cartItem.updateQuantity(quantity);
-        CartItem updatedCartItem = cartItemRepository.save(cartItem);
+        validCartItem.updateQuantity(quantity);
+        CartItem updatedCartItem = cartItemRepository.save(validCartItem);
 
         return CartItemResponse.of(updatedCartItem, item);
     }
