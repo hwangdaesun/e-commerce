@@ -30,4 +30,16 @@ public class IssueCouponResponse {
 
     @Schema(description = "발급일시", example = "2025-10-30T12:00:00")
     private LocalDateTime issuedAt;
+
+    public static IssueCouponResponse of(com.side.hhplusecommerce.coupon.domain.UserCoupon userCoupon, com.side.hhplusecommerce.coupon.domain.Coupon coupon) {
+        return new IssueCouponResponse(
+                userCoupon.getUserCouponId(),
+                coupon.getCouponId(),
+                coupon.getName(),
+                coupon.getDiscountAmount(),
+                userCoupon.getIsUsed(),
+                coupon.getExpiresAt(),
+                userCoupon.getIssuedAt()
+        );
+    }
 }

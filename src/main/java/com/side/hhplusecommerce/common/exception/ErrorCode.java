@@ -24,9 +24,11 @@ public enum ErrorCode {
     ALREADY_PAID_ORDER("ORDER_007", "이미 결제가 완료된 주문입니다.", HttpStatus.BAD_REQUEST),
 
     // Coupon
+    COUPON_NOT_FOUND("COUPON_000", "쿠폰을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     COUPON_SOLD_OUT("COUPON_001", "쿠폰이 모두 소진되었습니다.", HttpStatus.CONFLICT),
     ALREADY_USED_COUPON("COUPON_002", "이미 사용된 쿠폰입니다.", HttpStatus.BAD_REQUEST),
     EXPIRED_COUPON("COUPON_003", "만료된 쿠폰입니다.", HttpStatus.BAD_REQUEST),
+    ALREADY_ISSUED_COUPON("COUPON_004", "이미 발급받은 쿠폰입니다.", HttpStatus.CONFLICT),
 
     // Cart
     INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
