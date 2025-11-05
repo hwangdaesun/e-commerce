@@ -1,5 +1,7 @@
 package com.side.hhplusecommerce.user.controller.dto;
 
+import com.side.hhplusecommerce.item.domain.Item;
+import com.side.hhplusecommerce.user.domain.CartItem;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -33,4 +35,17 @@ public class CartItemResponse {
 
     @Schema(description = "장바구니 추가일시", example = "2025-10-30T12:00:00")
     private LocalDateTime createdAt;
+
+    public static CartItemResponse of(CartItem cartItem, Item item) {
+        return new CartItemResponse(
+                cartItem.getCartItemId(),
+                item.getItemId(),
+                item.getName(),
+                item.getPrice(),
+                cartItem.getQuantity(),
+                cartItem.calculateTotalPrice(item.getPrice()),
+                item.getStock(),
+                cartItem.getCreatedAt()
+        );
+    }
 }
