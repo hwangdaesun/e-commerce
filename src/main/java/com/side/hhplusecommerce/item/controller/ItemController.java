@@ -4,6 +4,8 @@ import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemStockResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
 import com.side.hhplusecommerce.item.controller.dto.PopularItemsResponse;
+import com.side.hhplusecommerce.item.usecase.ItemViewUseCase;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
@@ -11,7 +13,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/items")
+@RequiredArgsConstructor
 public class ItemController implements ItemControllerDocs {
+    private final ItemViewUseCase itemViewUseCase;
 
     @Override
     @GetMapping
@@ -34,14 +38,7 @@ public class ItemController implements ItemControllerDocs {
     public ResponseEntity<ItemResponse> getItem(
             @PathVariable Long itemId
     ) {
-        // Mock 데이터
-        ItemResponse response = new ItemResponse(
-                1L,
-                "기본 티셔츠",
-                29000,
-                50,
-                LocalDateTime.now()
-        );
+        ItemResponse response = itemViewUseCase.view(itemId);
         return ResponseEntity.ok(response);
     }
 

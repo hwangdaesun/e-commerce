@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     // Item
+    ITEM_NOT_FOUND("ITEM_000", "상품을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INSUFFICIENT_STOCK("ITEM_001", "재고가 부족합니다.", HttpStatus.CONFLICT),
     INVALID_STOCK_QUANTITY("ITEM_002", "차감할 수량은 1 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
 
@@ -27,7 +28,6 @@ public enum ErrorCode {
     EXPIRED_COUPON("COUPON_003", "만료된 쿠폰입니다.", HttpStatus.BAD_REQUEST),
 
     // Cart
-    INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST);
     INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
 
     // User

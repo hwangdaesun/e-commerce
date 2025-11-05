@@ -1,5 +1,6 @@
 package com.side.hhplusecommerce.item.controller.dto;
 
+import com.side.hhplusecommerce.item.domain.Item;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,4 +25,14 @@ public class ItemResponse {
 
     @Schema(description = "상품 등록일시", example = "2025-10-30T12:00:00")
     private LocalDateTime createdAt;
+
+    public static ItemResponse from(Item item) {
+        return new ItemResponse(
+                item.getItemId(),
+                item.getName(),
+                item.getPrice(),
+                item.getStock(),
+                item.getCreatedAt()
+        );
+    }
 }
