@@ -6,6 +6,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @AllArgsConstructor
@@ -41,5 +42,24 @@ public class UserCouponsResponse {
 
         @Schema(description = "발급일시", example = "2025-10-30T12:00:00")
         private LocalDateTime issuedAt;
+    }
+
+    public static UserCouponsResponse of(List<com.side.hhplusecommerce.coupon.domain.UserCoupon> userCoupons, Map<Long, com.side.hhplusecommerce.coupon.domain.Coupon> couponMap) {
+        List<UserCoupon> coupons = userCoupons.stream()
+                .map(userCoupon -> {
+                    com.side.hhplusecommerce.coupon.domain.Coupon coupon = couponMap.get(userCoupon.getCouponId());
+                    return new UserCoupon(
+                            userCoupon.getUserCouponId(),
+                            coupon.getCouponId(),
+                            coupon.getName(),
+                            coupon.getDiscountAmount(),
+                            userCoupon.getIsUsed(),
+                            userCoupon.getUsedAt(),
+                            coupon.getExpiresAt(),
+                            userCoupon.getIssuedAt()
+                    );
+                })
+                .toList();
+        return new UserCouponsResponse(coupons);
     }
 }

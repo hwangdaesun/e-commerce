@@ -36,6 +36,17 @@ public class UserCoupon {
                 .build();
     }
 
+    public static UserCoupon createWithId(Long userCouponId, Long userId, Long couponId, Boolean isUsed, LocalDateTime usedAt, LocalDateTime issuedAt) {
+        return UserCoupon.builder()
+                .userCouponId(userCouponId)
+                .userId(userId)
+                .couponId(couponId)
+                .isUsed(isUsed)
+                .usedAt(usedAt)
+                .issuedAt(issuedAt)
+                .build();
+    }
+
     public void use(LocalDateTime expiresAt) {
         if (Boolean.TRUE.equals(this.isUsed)) {
             throw new AlreadyUsedCouponException();

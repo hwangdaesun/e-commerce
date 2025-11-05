@@ -3,44 +3,23 @@ package com.side.hhplusecommerce.user.controller;
 import com.side.hhplusecommerce.user.controller.dto.IssueCouponRequest;
 import com.side.hhplusecommerce.user.controller.dto.IssueCouponResponse;
 import com.side.hhplusecommerce.user.controller.dto.UserCouponsResponse;
+import com.side.hhplusecommerce.user.usecase.CouponViewUseCase;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 public class CouponController implements CouponControllerDocs {
+    private final CouponViewUseCase couponViewUseCase;
 
     @Override
     @GetMapping("/api/users/{userId}/coupons")
     public ResponseEntity<UserCouponsResponse> getUserCoupons(@PathVariable Long userId) {
-        // Mock 데이터
-        List<UserCouponsResponse.UserCoupon> coupons = List.of(
-                new UserCouponsResponse.UserCoupon(
-                        1L,
-                        1L,
-                        "신규 가입 쿠폰",
-                        5000,
-                        false,
-                        null,
-                        LocalDateTime.now().plusMonths(2),
-                        LocalDateTime.now()
-                ),
-                new UserCouponsResponse.UserCoupon(
-                        2L,
-                        2L,
-                        "3월 특별 할인 쿠폰",
-                        10000,
-                        true,
-                        LocalDateTime.now().minusDays(5),
-                        LocalDateTime.now().plusMonths(1),
-                        LocalDateTime.now().minusDays(10)
-                )
-        );
-
-        UserCouponsResponse response = new UserCouponsResponse(coupons);
+        UserCouponsResponse response = couponViewUseCase.viewUserCoupons(userId);
         return ResponseEntity.ok(response);
     }
 
