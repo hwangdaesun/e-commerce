@@ -1,13 +1,12 @@
 package com.side.hhplusecommerce.item.usecase;
 
 import com.side.hhplusecommerce.common.dto.CursorRequest;
-import com.side.hhplusecommerce.common.exception.CustomException;
-import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemStockResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
 import com.side.hhplusecommerce.item.controller.dto.PopularItemsResponse;
 import com.side.hhplusecommerce.item.domain.Item;
+import com.side.hhplusecommerce.item.domain.ItemValidator;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
 import com.side.hhplusecommerce.item.service.ItemPopularityService;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +25,10 @@ public class ItemViewUseCase {
     private final ItemRepository itemRepository;
     private final ItemViewRepository itemViewRepository;
     private final ItemPopularityService itemPopularityService;
+    private final ItemValidator itemValidator;
 
     public ItemResponse view(Long itemId) {
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+        Item item = itemValidator.validateExistence(itemId);
 
         return ItemResponse.from(item);
     }
@@ -55,8 +54,7 @@ public class ItemViewUseCase {
     }
 
     public ItemStockResponse viewStock(Long itemId) {
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+        Item item = itemValidator.validateExistence(itemId);
 
         return ItemStockResponse.from(item);
     }

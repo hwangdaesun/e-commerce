@@ -3,7 +3,7 @@ package com.side.hhplusecommerce.cart.usecase;
 import com.side.hhplusecommerce.common.exception.CustomException;
 import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.item.domain.Item;
-import com.side.hhplusecommerce.item.repository.ItemRepository;
+import com.side.hhplusecommerce.item.domain.ItemValidator;
 import com.side.hhplusecommerce.cart.controller.dto.CartItemResponse;
 import com.side.hhplusecommerce.cart.domain.Cart;
 import com.side.hhplusecommerce.cart.domain.CartItem;
@@ -17,11 +17,10 @@ import org.springframework.stereotype.Service;
 public class CartAddUseCase {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final ItemRepository itemRepository;
+    private final ItemValidator itemValidator;
 
     public CartItemResponse add(Long userId, Long itemId, Integer quantity) {
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+        Item item = itemValidator.validateExistence(itemId);
 
         if (!item.hasEnoughQuantity(quantity)) {
             throw new CustomException(ErrorCode.INSUFFICIENT_STOCK);
