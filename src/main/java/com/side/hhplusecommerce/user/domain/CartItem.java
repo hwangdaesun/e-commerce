@@ -25,6 +25,7 @@ public class CartItem extends BaseEntity {
     public static CartItem create(Long cartId, Long itemId, Integer quantity) {
         validateQuantity(quantity);
         return CartItem.builder()
+                .cartItemId(cartItemId)
                 .cartId(cartId)
                 .itemId(itemId)
                 .quantity(quantity)
