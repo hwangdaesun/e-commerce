@@ -3,6 +3,7 @@ package com.side.hhplusecommerce.item.usecase;
 import com.side.hhplusecommerce.common.exception.CustomException;
 import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
+import com.side.hhplusecommerce.item.controller.dto.ItemStockResponse;
 import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,5 +19,12 @@ public class ItemViewUseCase {
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
         return ItemResponse.from(item);
+    }
+
+    public ItemStockResponse viewStock(Long itemId) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
+        return ItemStockResponse.from(item);
     }
 }

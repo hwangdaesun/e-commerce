@@ -63,8 +63,7 @@ public class ItemController implements ItemControllerDocs {
     public ResponseEntity<ItemStockResponse> getItemStock(
             @PathVariable Long itemId
     ) {
-        // Mock 데이터
-        ItemStockResponse response = new ItemStockResponse(1L, "기본 티셔츠", 50);
+        ItemStockResponse response = itemViewUseCase.viewStock(itemId);
         return ResponseEntity.ok(response);
     }
 }
