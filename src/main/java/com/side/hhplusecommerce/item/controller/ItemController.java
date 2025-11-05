@@ -1,5 +1,6 @@
 package com.side.hhplusecommerce.item.controller;
 
+import com.side.hhplusecommerce.common.dto.CursorRequest;
 import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemStockResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
@@ -23,13 +24,8 @@ public class ItemController implements ItemControllerDocs {
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") Integer size
     ) {
-        // Mock 데이터
-        List<ItemsResponse.ItemInfo> items = List.of(
-                new ItemsResponse.ItemInfo(1L, "기본 티셔츠", 29000, 0, LocalDateTime.now()),
-                new ItemsResponse.ItemInfo(2L, "청바지", 59000, 50, LocalDateTime.now())
-        );
-
-        ItemsResponse response = new ItemsResponse(items, null, false);
+        CursorRequest cursorRequest = CursorRequest.of(cursor, size);
+        ItemsResponse response = itemViewUseCase.view(cursorRequest);
         return ResponseEntity.ok(response);
     }
 

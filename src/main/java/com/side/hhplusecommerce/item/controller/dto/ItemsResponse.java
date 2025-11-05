@@ -1,11 +1,13 @@
 package com.side.hhplusecommerce.item.controller.dto;
 
+import com.side.hhplusecommerce.item.domain.Item;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -38,5 +40,19 @@ public class ItemsResponse {
 
         @Schema(description = "상품 등록일시", example = "2025-10-30T12:00:00")
         private LocalDateTime createdAt;
+
+        public static ItemInfo from(Item item) {
+            return new ItemInfo(
+                    item.getItemId(),
+                    item.getName(),
+                    item.getPrice(),
+                    item.getStock(),
+                    item.getCreatedAt()
+            );
+        }
+    }
+
+    public static ItemsResponse of(List<ItemInfo> items, Long nextCursor, Boolean hasNext) {
+        return new ItemsResponse(items, nextCursor, hasNext);
     }
 }
