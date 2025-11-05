@@ -4,7 +4,7 @@ import com.side.hhplusecommerce.coupon.domain.Coupon;
 import com.side.hhplusecommerce.coupon.domain.UserCoupon;
 import com.side.hhplusecommerce.coupon.repository.CouponRepository;
 import com.side.hhplusecommerce.coupon.repository.UserCouponRepository;
-import com.side.hhplusecommerce.user.controller.dto.UserCouponsResponse;
+import com.side.hhplusecommerce.coupon.controller.dto.UserCouponsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

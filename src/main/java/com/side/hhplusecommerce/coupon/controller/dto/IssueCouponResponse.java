@@ -1,4 +1,4 @@
-package com.side.hhplusecommerce.user.controller.dto;
+package com.side.hhplusecommerce.coupon.controller.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

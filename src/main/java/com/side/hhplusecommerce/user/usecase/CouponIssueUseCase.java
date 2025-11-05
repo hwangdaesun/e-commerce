@@ -8,7 +8,7 @@ import com.side.hhplusecommerce.coupon.domain.UserCoupon;
 import com.side.hhplusecommerce.coupon.repository.CouponRepository;
 import com.side.hhplusecommerce.coupon.repository.CouponStockRepository;
 import com.side.hhplusecommerce.coupon.repository.UserCouponRepository;
-import com.side.hhplusecommerce.user.controller.dto.IssueCouponResponse;
+import com.side.hhplusecommerce.coupon.controller.dto.IssueCouponResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

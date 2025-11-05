@@ -1,8 +1,8 @@
-package com.side.hhplusecommerce.user.controller;
+package com.side.hhplusecommerce.coupon.controller;
 
-import com.side.hhplusecommerce.user.controller.dto.IssueCouponRequest;
-import com.side.hhplusecommerce.user.controller.dto.IssueCouponResponse;
-import com.side.hhplusecommerce.user.controller.dto.UserCouponsResponse;
+import com.side.hhplusecommerce.coupon.controller.dto.IssueCouponRequest;
+import com.side.hhplusecommerce.coupon.controller.dto.IssueCouponResponse;
+import com.side.hhplusecommerce.coupon.controller.dto.UserCouponsResponse;
 import com.side.hhplusecommerce.user.usecase.CouponIssueUseCase;
 import com.side.hhplusecommerce.user.usecase.CouponViewUseCase;
 import lombok.RequiredArgsConstructor;
