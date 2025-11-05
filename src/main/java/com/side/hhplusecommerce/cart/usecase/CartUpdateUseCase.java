@@ -7,6 +7,7 @@ import com.side.hhplusecommerce.item.repository.ItemRepository;
 import com.side.hhplusecommerce.cart.controller.dto.CartItemResponse;
 import com.side.hhplusecommerce.cart.domain.Cart;
 import com.side.hhplusecommerce.cart.domain.CartItem;
+import com.side.hhplusecommerce.cart.domain.CartItemValidator;
 import com.side.hhplusecommerce.cart.repository.CartItemRepository;
 import com.side.hhplusecommerce.cart.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class CartUpdateUseCase {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ItemRepository itemRepository;
+    private final CartItemValidator cartItemValidator;
 
     public CartItemResponse update(Long cartItemId, Long userId, Integer quantity) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
@@ -26,10 +28,7 @@ public class CartUpdateUseCase {
         Cart cart = cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.CART_ITEM_NOT_FOUND));
 
-        // 본인 장바구니 항목인지 검증
-        if (!cartItem.getCartId().equals(cart.getCartId())) {
-            throw new CustomException(ErrorCode.CART_ITEM_NOT_FOUND);
-        }
+        cartItemValidator.validateOwnership(cartItem, cart);
 
         Item item = itemRepository.findById(cartItem.getItemId())
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
