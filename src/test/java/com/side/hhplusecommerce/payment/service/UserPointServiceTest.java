@@ -1,17 +1,13 @@
 package com.side.hhplusecommerce.payment.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import com.side.hhplusecommerce.common.exception.CustomException;
 import com.side.hhplusecommerce.common.exception.ErrorCode;
-import com.side.hhplusecommerce.point.domain.UserPoint;
 import com.side.hhplusecommerce.point.exception.InsufficientPointException;
 import com.side.hhplusecommerce.point.exception.InvalidPointAmountException;
-import com.side.hhplusecommerce.point.repository.UserPointRepository;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UserPointServiceTest {
 
     @Mock
-    private UserPointRepository userPointRepository;
+    private UserPointLockService userPointLockService;
 
     @InjectMocks
     private UserPointService userPointService;
@@ -36,20 +32,12 @@ class UserPointServiceTest {
         // given
         Long userId = 1L;
         Integer amount = 10000;
-        Integer initialPoint = 50000;
-
-        UserPoint userPoint = UserPoint.initialize(userId);
-        userPoint.charge(initialPoint);
-
-        given(userPointRepository.findByUserId(userId)).willReturn(Optional.of(userPoint));
 
         // when
-        userPointService.usePointWithPessimisticLock(userId, amount);
+        userPointService.use(userId, amount);
 
         // then
-        assertThat(userPoint.getPoint()).isEqualTo(40000);
-        verify(userPointRepository).findByUserId(userId);
-        verify(userPointRepository).save(userPoint);
+        verify(userPointLockService).usePointWithPessimisticLock(userId, amount);
     }
 
     @Test
@@ -59,14 +47,15 @@ class UserPointServiceTest {
         Long userId = 1L;
         Integer amount = 10000;
 
-        given(userPointRepository.findByUserId(userId)).willReturn(Optional.empty());
+        doThrow(new CustomException(ErrorCode.USER_POINT_NOT_FOUND))
+                .when(userPointLockService).usePointWithPessimisticLock(userId, amount);
 
         // when & then
-        assertThatThrownBy(() -> userPointService.usePointWithPessimisticLock(userId, amount))
+        assertThatThrownBy(() -> userPointService.use(userId, amount))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.USER_POINT_NOT_FOUND.getMessage());
 
-        verify(userPointRepository).findByUserId(userId);
+        verify(userPointLockService).usePointWithPessimisticLock(userId, amount);
     }
 
     @Test
@@ -75,18 +64,15 @@ class UserPointServiceTest {
         // given
         Long userId = 1L;
         Integer amount = 10000;
-        Integer initialPoint = 5000;
 
-        UserPoint userPoint = UserPoint.initialize(userId);
-        userPoint.charge(initialPoint);
-
-        given(userPointRepository.findByUserId(userId)).willReturn(Optional.of(userPoint));
+        doThrow(new InsufficientPointException())
+                .when(userPointLockService).usePointWithPessimisticLock(userId, amount);
 
         // when & then
-        assertThatThrownBy(() -> userPointService.usePointWithPessimisticLock(userId, amount))
+        assertThatThrownBy(() -> userPointService.use(userId, amount))
                 .isInstanceOf(InsufficientPointException.class);
 
-        verify(userPointRepository).findByUserId(userId);
+        verify(userPointLockService).usePointWithPessimisticLock(userId, amount);
     }
 
     @ParameterizedTest
@@ -95,15 +81,12 @@ class UserPointServiceTest {
     void use_PointWithPessimisticLock_fail_invalid_amount(Integer amount) {
         // given
         Long userId = 1L;
-        Integer initialPoint = 10000;
 
-        UserPoint userPoint = UserPoint.initialize(userId);
-        userPoint.charge(initialPoint);
-
-        given(userPointRepository.findByUserId(userId)).willReturn(Optional.of(userPoint));
+        doThrow(new InvalidPointAmountException())
+                .when(userPointLockService).usePointWithPessimisticLock(userId, amount);
 
         // when & then
-        assertThatThrownBy(() -> userPointService.usePointWithPessimisticLock(userId, amount))
+        assertThatThrownBy(() -> userPointService.use(userId, amount))
                 .isInstanceOf(InvalidPointAmountException.class);
     }
 }
