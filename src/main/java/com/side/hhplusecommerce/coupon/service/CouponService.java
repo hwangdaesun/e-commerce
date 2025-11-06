@@ -28,4 +28,12 @@ public class CouponService {
 
         return new CouponUseResult(coupon, coupon.getDiscountAmount());
     }
+
+    public void cancelCouponUse(Long userCouponId) {
+        UserCoupon userCoupon = userCouponRepository.findById(userCouponId)
+                .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
+
+        userCoupon.cancelUse();
+        userCouponRepository.save(userCoupon);
+    }
 }

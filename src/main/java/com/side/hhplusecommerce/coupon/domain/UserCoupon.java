@@ -58,6 +58,11 @@ public class UserCoupon {
         this.usedAt = LocalDateTime.now();
     }
 
+    public void cancelUse() {
+        this.isUsed = false;
+        this.usedAt = null;
+    }
+
     public boolean isExpired(LocalDateTime expiresAt) {
         return LocalDateTime.now().isAfter(expiresAt);
     }
