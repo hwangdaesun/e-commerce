@@ -62,6 +62,7 @@
 - `cartId`: Long (PK)
 - `userId`: Long
 - `createdAt`: DateTime (생성일시)
+- `updatedAt`: DateTime (수정일시)
 
 #### CartItem (장바구니 항목)
 - `cartItemId`: Long (PK)
@@ -82,12 +83,12 @@
 - `totalAmount`: Integer (총 상품 금액)
 - `couponDiscount`: Integer (쿠폰 할인 금액, 0 if not used)
 - `finalAmount`: Integer (최종 결제 금액 - 쿠폰 적용 후)
-- `orderedAt`: DateTime (주문일시)
+- `createdAt`: DateTime (생성일시)
+- `updatedAt`: DateTime (수정일시)
 
 #### OrderItem (주문 항목)
 - `orderItemId`: Long (PK)
 - `orderId`: Long
-- `cartItemId`: Long
 - `itemId`: Long
 - `name`: String (상품명)
 - `price`: Integer (주문 가격)
@@ -105,6 +106,7 @@
 - `totalQuantity`: Integer (총 발행 가능 수량)
 - `expiresAt`: DateTime (만료일시)
 - `createdAt`: DateTime (생성일시)
+- `updatedAt`: DateTime (수정일시)
 
 #### CouponStock (쿠폰 재고)
 - `couponId`: Long (PK, FK) - Coupon과 식별 관계
@@ -181,11 +183,12 @@
   - `totalAmount`: 총 상품 금액
   - `couponDiscount`: 쿠폰 할인 금액 (쿠폰 미사용 시 0)
   - `finalAmount`: 최종 결제 금액 (쿠폰 적용 후)
+- `createdAt`이 주문일시로 사용됨
 
 **OrderItem (주문 항목)**
 - 주문에 포함된 상품 정보
 - 주문 당시의 가격과 상품명 보관 (가격/상품명 변동 대비)
-- 장바구니 항목 ID를 통해 어떤 장바구니 항목으로부터 주문되었는지 추적
+- `userCouponId`를 통해 해당 주문 항목에 쿠폰이 적용되었는지 추적
 
 ---
 
