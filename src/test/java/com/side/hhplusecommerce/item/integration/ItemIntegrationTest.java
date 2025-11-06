@@ -1,4 +1,4 @@
-package com.side.hhplusecommerce.item.controller;
+package com.side.hhplusecommerce.item.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.side.hhplusecommerce.item.domain.Item;
@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class ItemControllerIntegrationTest {
+class ItemIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

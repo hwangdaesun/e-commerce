@@ -1,4 +1,4 @@
-package com.side.hhplusecommerce.order.controller;
+package com.side.hhplusecommerce.order.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.side.hhplusecommerce.cart.domain.Cart;

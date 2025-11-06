@@ -1,4 +1,4 @@
-package com.side.hhplusecommerce.coupon.controller;
+package com.side.hhplusecommerce.coupon.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.side.hhplusecommerce.coupon.controller.dto.IssueCouponRequest;
@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class CouponControllerIntegrationTest {
+class CouponIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
