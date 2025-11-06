@@ -43,7 +43,7 @@ public class ItemViewUseCase {
         List<ItemsResponse.ItemInfo> itemInfos = items.stream()
                 .limit(cursorRequest.getSize())
                 .map(ItemsResponse.ItemInfo::from)
-                .collect(java.util.stream.Collectors.toList());
+                .toList();
 
         Long nextCursor = null;
         if (hasNext && !itemInfos.isEmpty()) {
