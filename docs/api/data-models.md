@@ -49,15 +49,6 @@
 - `point`: Integer (보유 포인트)
 - `updatedAt`: DateTime (수정일시)
 
-#### UserPointHistory (사용자 포인트 이력)
-- `pointHistoryId`: Long (PK)
-- `userId`: Long
-- `orderId`: Long (nullable)
-- `amount`: Integer (변동 금액 - 양수: 충전, 음수: 사용)
-- `balanceAfter`: Integer (변동 후 잔액)
-- `type`: String (거래 유형 - CHARGE, USE)
-- `createdAt`: DateTime (거래일시)
-
 #### Cart (장바구니)
 - `cartId`: Long (PK)
 - `userId`: Long
@@ -151,16 +142,6 @@
 - User와 1:1 식별 관계 (userId가 PK이자 FK)
 - 포인트 충전/사용이 빈번하므로 별도 테이블로 분리하여 동시성 제어 최적화
 - 주문 시 결제 수단으로 사용
-
-**UserPointHistory (사용자 포인트 이력)**
-- 포인트 충전/사용 이력을 기록
-- 모든 포인트 변동 내역 추적 (감사 로그)
-- 거래 유형
-  - CHARGE: 포인트 충전
-  - USE: 포인트 사용 (주문 결제)
-- `amount`: 변동 금액 (양수: 충전, 음수: 사용)
-- `balanceAfter`: 거래 후 잔액 (데이터 정합성 검증용)
-- `orderId`: 주문과 연결
 
 **Cart (장바구니)**
 - 사용자별 장바구니
