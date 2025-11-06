@@ -3,6 +3,7 @@ package com.side.hhplusecommerce.order.controller;
 import com.side.hhplusecommerce.order.controller.dto.CreateOrderRequest;
 import com.side.hhplusecommerce.order.controller.dto.CreateOrderResponse;
 import com.side.hhplusecommerce.order.usecase.OrderCreateUseCase;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class OrderController implements OrderControllerDocs {
 
     @Override
     @PostMapping
-    public ResponseEntity<CreateOrderResponse> createOrder(@RequestBody CreateOrderRequest request) {
+    public ResponseEntity<CreateOrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         CreateOrderResponse response = orderCreateUseCase.create(
                 request.getUserId(),
                 request.getCartItemIds(),

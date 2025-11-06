@@ -5,6 +5,7 @@ import com.side.hhplusecommerce.coupon.controller.dto.IssueCouponResponse;
 import com.side.hhplusecommerce.coupon.controller.dto.UserCouponsResponse;
 import com.side.hhplusecommerce.cart.usecase.CouponIssueUseCase;
 import com.side.hhplusecommerce.cart.usecase.CouponViewUseCase;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,7 @@ public class CouponController implements CouponControllerDocs {
     @PostMapping("/api/coupons/{couponId}/issue")
     public ResponseEntity<IssueCouponResponse> issueCoupon(
             @PathVariable Long couponId,
-            @RequestBody IssueCouponRequest request
+            @Valid @RequestBody IssueCouponRequest request
     ) {
         IssueCouponResponse response = couponIssueUseCase.issue(couponId, request.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

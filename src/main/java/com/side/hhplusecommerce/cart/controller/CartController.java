@@ -7,6 +7,7 @@ import com.side.hhplusecommerce.cart.controller.dto.UpdateCartItemRequest;
 import com.side.hhplusecommerce.cart.usecase.CartAddUseCase;
 import com.side.hhplusecommerce.cart.usecase.CartUpdateUseCase;
 import com.side.hhplusecommerce.cart.usecase.CartViewUseCase;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class CartController implements CartControllerDocs {
 
     @Override
     @PostMapping("/items")
-    public ResponseEntity<CartItemResponse> addCartItem(@RequestBody CartItemRequest request) {
+    public ResponseEntity<CartItemResponse> addCartItem(@Valid @RequestBody CartItemRequest request) {
         CartItemResponse response = cartAddUseCase.add(
                 request.getUserId(),
                 request.getItemId(),
@@ -42,7 +43,7 @@ public class CartController implements CartControllerDocs {
     @PatchMapping("/items/{cartItemId}")
     public ResponseEntity<CartItemResponse> updateCartItemQuantity(
             @PathVariable Long cartItemId,
-            @RequestBody UpdateCartItemRequest request
+            @Valid @RequestBody UpdateCartItemRequest request
     ) {
         CartItemResponse response = cartUpdateUseCase.update(
                 cartItemId,
