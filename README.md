@@ -13,17 +13,17 @@
 ```mermaid
 sequenceDiagram
       participant Controller as ItemController
-      participant Service as ItemService
+      participant UseCase as ItemViewUseCase
       participant Repository as ItemRepository
 
-      Controller->>Service: 상품 목록 조회 요청
+      Controller->>UseCase: 상품 목록 조회 요청
       alt 첫 페이지
-          Service->>Repository: 최신순 조회
+          UseCase->>Repository: 최신순 조회
       else 다음 페이지
-          Service->>Repository: 커서 기반 조회
+          UseCase->>Repository: 커서 기반 조회
       end
-      Repository-->>Service: 상품 목록 반환
-      Service-->>Controller: 상품 목록 응답 반환
+      Repository-->>UseCase: 상품 목록 반환
+      UseCase-->>Controller: 상품 목록 응답 반환
 ```
 
 ### 1.2 상품 상세 조회 (GET /api/items/{itemId})
@@ -31,133 +31,120 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
       participant Controller as ItemController
-      participant Service as ItemService
-      participant ItemRepo as ItemRepository
-      participant StockRepo as ItemStockRepository
+      participant UseCase as ItemViewUseCase
+      participant Validator as ItemValidator
+      participant Repository as ItemRepository
 
-      Controller->>Service: 상품 조회 요청
-      Service->>ItemRepo: 상품 정보 조회
+      Controller->>UseCase: 상품 조회 요청
+      UseCase->>Validator: 상품 존재 여부 검증
+      Validator->>Repository: 상품 정보 조회
       alt 상품 없음
-          ItemRepo-->>Service: 상품 없음
-          Service-->>Controller: ItemNotFoundException
+          Repository-->>Validator: 상품 없음
+          Validator-->>UseCase: ItemNotFoundException
+          UseCase-->>Controller: ItemNotFoundException
       else 상품 있음
-          ItemRepo-->>Service: 상품 정보 반환
-          Service->>StockRepo: 재고 정보 조회
-          StockRepo-->>Service: 재고 정보 반환
-          Service-->>Controller: 상품 상세 응답
+          Repository-->>Validator: 상품 정보 반환 (재고 포함)
+          Validator-->>UseCase: 검증 완료
+          UseCase-->>Controller: 상품 상세 응답
       end
 ```
 
 ### 1.3 인기 상품 조회 (GET /api/items/popular)
 
-
 ```mermaid
 sequenceDiagram
       participant Controller as ItemController
-      participant Service as ItemService
-      participant OrderItemRepo as OrderItemRepository
+      participant UseCase as ItemViewUseCase
+      participant PopularityService as ItemPopularityService
+      participant ItemRepo as ItemRepository
+      participant ItemViewRepo as ItemViewRepository
 
-      Controller->>Service: 인기 상품 조회 요청
-      Service->>OrderItemRepo: 최근 3일 판매량 집계 조회
-      Note over OrderItemRepo: ORDER_ITEM + ITEM + STOCK JOIN <br/>판매량 기준으로 정렬
-      OrderItemRepo-->>Service: 인기 상품 정보 반환
-      Note over Service: 순위 정보 조합
-      Service-->>Controller: 인기 상품 응답
+      Controller->>UseCase: 인기 상품 조회 요청
+      UseCase->>ItemRepo: 최근 3일 판매 상품 조회
+      ItemRepo-->>UseCase: 판매 상품 목록 반환
+      UseCase->>ItemViewRepo: 상품별 조회수 집계
+      ItemViewRepo-->>UseCase: 조회수 정보 반환
+      UseCase->>PopularityService: 인기도 계산 (조회수×9 + 판매량×1)
+      PopularityService-->>UseCase: 인기도 순위 목록
+      UseCase->>ItemRepo: 인기 상품 정보 조회
+      ItemRepo-->>UseCase: 상품 상세 정보
+      UseCase-->>Controller: 인기 상품 응답
 ```
 
-초기에는 MySQL 사용하여 쿼리로만 처리, 후에 별도의 집계 테이블을 두거나 캐싱 사용 고려.
+인기도 계산식: `조회수 × 9 + 판매량 × 1` 가중치 적용
 
 ### 1.4 상품 재고 확인 (GET /api/items/{itemId}/stock)
 
 ```mermaid
- sequenceDiagram
+sequenceDiagram
       participant Controller as ItemController
-      participant Service as ItemService
-      participant ItemRepo as ItemRepository
-      participant StockRepo as ItemStockRepository
+      participant UseCase as ItemViewUseCase
+      participant Validator as ItemValidator
+      participant Repository as ItemRepository
 
-      Controller->>Service: 상품 재고 조회 요청
-      Service->>ItemRepo: 상품 정보 조회
+      Controller->>UseCase: 상품 재고 조회 요청
+      UseCase->>Validator: 상품 존재 여부 검증
+      Validator->>Repository: 상품 정보 조회
       alt 상품 없음
-          ItemRepo-->>Service: 상품 없음
-          Service-->>Controller: ItemNotFoundException
+          Repository-->>Validator: 상품 없음
+          Validator-->>UseCase: ItemNotFoundException
+          UseCase-->>Controller: ItemNotFoundException
       else 상품 있음
-          ItemRepo-->>Service: 상품 정보 반환
-          Service->>StockRepo: 재고 정보 조회
-          StockRepo-->>Service: 재고 정보 반환
-          Service-->>Controller: 재고 조회 응답
+          Repository-->>Validator: 상품 정보 반환 (재고 포함)
+          Validator-->>UseCase: 검증 완료
+          UseCase-->>Controller: 재고 조회 응답
       end
 ```
 
-단순 조회를 사용하여 실시간으로 재고 확인.
+Item 엔티티에 재고 정보가 포함되어 있어 실시간 재고 확인 가능.
 
 ### 2.1 장바구니 상품 추가 (POST /api/cart/items)
 
 ```mermaid
 sequenceDiagram
       participant Controller as CartController
-      participant Service as CartService
+      participant UseCase as CartAddUseCase
+      participant ItemRepo as ItemRepository
       participant CartRepo as CartRepository
       participant CartItemRepo as CartItemRepository
-      participant ItemRepo as ItemRepository
-      participant StockRepo as ItemStockRepository
 
-      Controller->>Service: 장바구니 추가 요청
-      Note over Service: 🔒 트랜잭션 시작
-      Service->>ItemRepo: 상품 정보 조회
-      alt 상품 없음
-          ItemRepo-->>Service: 상품 없음
-          Service-->>Controller: ItemNotFoundException
-      else 상품 있음
-          ItemRepo-->>Service: 상품 정보 반환
-          Service->>StockRepo: 재고 정보 조회
-          StockRepo-->>Service: 재고 정보 반환
-          alt 재고 부족
-              Service-->>Controller: InsufficientStockException
-          else 재고 충분
-              Service->>CartRepo: 사용자 장바구니 조회
-              alt 장바구니 없음
-                  CartRepo-->>Service: 장바구니 없음
-                  Service->>CartRepo: 새 장바구니 생성
-                  CartRepo-->>Service: 장바구니 반환
-              else 장바구니 있음
-                  CartRepo-->>Service: 장바구니 반환
-              end
-              Service->>CartItemRepo: 장바구니 항목 저장
-              CartItemRepo-->>Service: 장바구니 항목 반환
-              Note over Service: ✅ 커밋
-              Service-->>Controller: 장바구니 추가 응답
-          end
+      Controller->>UseCase: 장바구니 추가 요청
+      UseCase->>ItemRepo: 상품 조회 및 재고 확인
+      alt 상품 없음 또는 재고 부족
+          ItemRepo-->>UseCase: Exception
+          UseCase-->>Controller: Exception
+      else 재고 충분
+          UseCase->>CartRepo: 장바구니 조회/생성
+          CartRepo-->>UseCase: 장바구니 반환
+          UseCase->>CartItemRepo: 장바구니 항목 저장
+          CartItemRepo-->>UseCase: 저장 완료
+          UseCase-->>Controller: 장바구니 추가 응답
       end
 ```
 
 ### 2.3 장바구니 수량 수정 (PATCH/api/cart/items/{cartItemId})
 
 ```mermaid
- sequenceDiagram
+sequenceDiagram
       participant Controller as CartController
-      participant Service as CartService
+      participant UseCase as CartUpdateUseCase
       participant CartItemRepo as CartItemRepository
-      participant StockRepo as ItemStockRepository
+      participant ItemRepo as ItemRepository
 
-      Controller->>Service: 장바구니 수량 수정 요청
-      Note over Service: 🔒 트랜잭션 시작
-      Service->>CartItemRepo: 장바구니 항목 조회
-      alt 장바구니 항목 없음
-          CartItemRepo-->>Service: 항목 없음
-          Service-->>Controller: CartItemNotFoundException
-      else 장바구니 항목 있음
-          CartItemRepo-->>Service: 장바구니 항목 반환
-          Service->>StockRepo: 재고 정보 조회
-          StockRepo-->>Service: 재고 정보 반환
+      Controller->>UseCase: 장바구니 수량 수정 요청
+      UseCase->>CartItemRepo: 장바구니 항목 조회 및 소유권 검증
+      alt 항목 없음 또는 권한 없음
+          CartItemRepo-->>UseCase: Exception
+          UseCase-->>Controller: Exception
+      else 검증 완료
+          UseCase->>ItemRepo: 상품 조회 및 재고 확인
           alt 재고 부족
-              Service-->>Controller: InsufficientStockException
+              ItemRepo-->>UseCase: InsufficientStockException
+              UseCase-->>Controller: InsufficientStockException
           else 재고 충분
-              Note over Service: 수량 업데이트
-              Service->>CartItemRepo: 장바구니 항목 저장
-              CartItemRepo-->>Service: 장바구니 항목 반환
-              Note over Service: ✅ 커밋
-              Service-->>Controller: 수량 수정 응답
+              UseCase->>CartItemRepo: 수량 업데이트 및 저장
+              CartItemRepo-->>UseCase: 저장 완료
+              UseCase-->>Controller: 수량 수정 응답
           end
       end
 ```
@@ -167,140 +154,111 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-participant Controller as CouponController
-participant Service as CouponService
-participant UserCouponRepo as UserCouponRepository
-participant CouponRepo as CouponRepository
+      participant Controller as CouponController
+      participant UseCase as CouponViewUseCase
+      participant UserCouponRepo as UserCouponRepository
+      participant CouponRepo as CouponRepository
 
-  Controller->>Service: getUserCoupons(userId)
-  Service->>UserCouponRepo: findAllByUserId(userId)
-  UserCouponRepo-->>Service: List<UserCoupon>
-  Service->>CouponRepo: findAllById(couponIds)
-  CouponRepo-->>Service: List<Coupon>
-  Note over Service: 쿠폰 정보 
-  Service-->>Controller: UserCouponsResponse
-
+      Controller->>UseCase: 사용자 쿠폰 조회 요청
+      UseCase->>UserCouponRepo: 사용자 쿠폰 목록 조회
+      UserCouponRepo-->>UseCase: 사용자 쿠폰 목록
+      UseCase->>CouponRepo: 쿠폰 정보 조회 (각 쿠폰별)
+      CouponRepo-->>UseCase: 쿠폰 정보
+      UseCase-->>Controller: 쿠폰 목록 응답
 ```
 
 ### 3.2 쿠폰 발급 (POST /api/coupons/{couponId}/issue)
 
 ```mermaid
- sequenceDiagram
-      participant Controller
-      participant CouponService
+sequenceDiagram
+      participant Controller as CouponController
+      participant UseCase as CouponIssueUseCase
+      participant LockService as CouponIssueLockService
       participant CouponRepo as CouponRepository
+      participant CouponStockRepo as CouponStockRepository
       participant UserCouponRepo as UserCouponRepository
 
-      Controller->>CouponService: 쿠폰 발급 요청
-
-      Note over CouponService: 🔒 트랜잭션 시작
-
-      CouponService->>CouponRepo: 쿠폰 조회
-      alt 쿠폰 없음
-          CouponRepo-->>CouponService: 쿠폰 없음
-          CouponService-->>Controller: CouponNotFoundException
-      end
-
-      CouponService->>UserCouponRepo: 중복 발급 확인
-      alt 이미 발급받음
-          UserCouponRepo-->>CouponService: 발급 이력 존재
-          CouponService-->>Controller: CouponAlreadyIssuedException
-      end
-
-      CouponService->>CouponRepo: 쿠폰 발급 수량 조회 (FOR UPDATE)
-      Note over CouponRepo: 🔒 배타적 락<br/>(동시 발급 제어)
-
-      alt 수량 소진
-          CouponService-->>Controller: CouponOutOfStockException
-      else 수량 있음
-          CouponService->>CouponRepo: 발급 수량 증가
-          CouponRepo-->>CouponService: 수량 업데이트 완료
-          CouponService->>UserCouponRepo: 사용자 쿠폰 생성
-          UserCouponRepo-->>CouponService: 사용자 쿠폰 반환
-
-          Note over CouponService: ✅ 커밋 (락 해제)
-
-          CouponService-->>Controller: 발급 성공 응답
+      Controller->>UseCase: 쿠폰 발급 요청
+      UseCase->>LockService: 쿠폰 발급 처리 (@PessimisticLock)
+      Note over LockService: 🔒 ReentrantLock (3초 timeout)
+      LockService->>CouponRepo: 쿠폰 조회
+      LockService->>UserCouponRepo: 중복 발급 확인
+      LockService->>CouponStockRepo: 쿠폰 재고 조회 및 차감
+      alt 실패 (쿠폰 없음/중복/재고 부족)
+          LockService-->>UseCase: Exception
+          Note over LockService: 🔓 Lock 해제
+          UseCase-->>Controller: Exception
+      else 성공
+          LockService->>UserCouponRepo: 사용자 쿠폰 생성
+          UserCouponRepo-->>LockService: 쿠폰 발급 완료
+          Note over LockService: 🔓 Lock 해제
+          LockService-->>UseCase: 발급 성공
+          UseCase-->>Controller: 발급 성공 응답
       end
 ```
 
 ### 4.1 주문 생성 (POST /api/orders)
 
 ```mermaid
- sequenceDiagram
-        participant Controller
-        participant OrderFacade
-        participant CartService
+sequenceDiagram
+        participant Controller as OrderController
+        participant UseCase as OrderCreateUseCase
         participant CouponService
-        participant ItemService
-        participant PaymentService
+        participant ItemStockService
         participant OrderService
-        participant OrderHistoryService
+        participant PaymentService
+        participant RollbackHandler as OrderRollbackHandler
+        participant CartItemService
+        participant ExternalDataPlatform as ExternalDataPlatformService
 
-        Controller->>OrderFacade: 주문 생성 요청
+        Controller->>UseCase: 주문 생성 요청
+        UseCase->>UseCase: 장바구니 및 상품 검증
 
-        Note over OrderFacade: 🔒 트랜잭션 시작
-
-        OrderFacade->>CartService: 장바구니 조회
-        CartService-->>OrderFacade: 장바구니 항목 반환
-
-        OrderFacade->>CouponService: 쿠폰 검증 (락 없음)
-        alt 쿠폰 사용 불가
-            CouponService-->>OrderFacade: 쿠폰 사용 불가
-            OrderFacade-->>Controller: InvalidCouponException
+        UseCase->>CouponService: 쿠폰 사용 처리
+        alt 쿠폰 사용 실패
+            CouponService-->>UseCase: Exception
+            UseCase-->>Controller: Exception
         end
 
-        OrderFacade->>CouponService: 쿠폰 사용 처리
-        CouponService-->>OrderFacade: 쿠폰 사용 완료
-
-        OrderFacade->>ItemService: 재고 확인 및 차감 (FOR UPDATE)
-        alt 재고 부족
-            ItemService-->>OrderFacade: 재고 부족
-            Note over OrderFacade: ❌ 롤백: 쿠폰 사용 취소
-            OrderFacade-->>Controller: InsufficientStockException
-        end
-        ItemService-->>OrderFacade: 재고 차감 완료
-
-        OrderFacade->>OrderService: 주문 생성 (상태: PENDING)
-        OrderService-->>OrderFacade: 주문 생성 완료 (PENDING)
-
-        OrderFacade->>PaymentService: 잔액 확인 및 차감 (FOR UPDATE)
-        alt 잔액 부족
-            PaymentService-->>OrderFacade: 잔액 부족
-            OrderFacade->>OrderService: 주문 상태 변경 (FAILED)
-            OrderService-->>OrderFacade: 상태 변경 완료
-            Note over OrderFacade: ❌ 롤백: 재고 복구, 쿠폰 사용 취소
-            OrderFacade-->>Controller: InsufficientBalanceException
-        end
-        PaymentService-->>OrderFacade: 잔액 차감 완료
-
-        OrderFacade->>OrderService: 주문 상태 변경 (PAID)
-        OrderService-->>OrderFacade: 상태 변경 완료
-
-        Note over OrderFacade: ✅ 커밋
-
-        OrderFacade-->>CartService: 🔄 장바구니 삭제 이벤트 발행
-
-        OrderFacade-->>Controller: 주문 생성 응답
-
-        Note over CartService: 🔄 비동기 이벤트 처리
-        Note over CartService: 🔒 별도 트랜잭션
-        CartService->>CartService: 장바구니 삭제
-        Note over CartService: ✅ 커밋
-
-        Note over OrderFacade: 🔄 비동기 이벤트 발행
-        OrderFacade-->>OrderHistoryService: 외부 데이터 플랫폼 전송 이벤트 발행
-
-        Note over OrderHistoryService: 🔄 비동기 이벤트 처리
-        Note over OrderHistoryService: 🔒 별도 트랜잭션
-        OrderHistoryService->>OrderHistoryService: 외부 데이터 플랫폼 전송
-        alt 전송 성공
-            OrderHistoryService->>OrderService: 주문 전송 상태 변경 (SUCCESS)
-            OrderService-->>OrderHistoryService: 상태 변경 완료
-            Note over OrderHistoryService: ✅ 커밋
-        else 전송 실패
-            Note over OrderHistoryService: ❌ 롤백
-            Note over OrderHistoryService: 재시도 로직 또는 실패 처리
+        UseCase->>ItemStockService: 재고 차감 (@OptimisticLock)
+        Note over ItemStockService: 🔒 CAS 연산 (최대 5회 재시도)
+        alt 재고 차감 실패
+            ItemStockService-->>UseCase: Exception
+            UseCase->>RollbackHandler: 쿠폰 롤백
+            RollbackHandler-->>UseCase: 롤백 완료
+            UseCase-->>Controller: Exception
         end
 
+        UseCase->>OrderService: 주문 생성 (상태: PENDING)
+        alt 주문 생성 실패
+            OrderService-->>UseCase: Exception
+            UseCase->>RollbackHandler: 쿠폰 + 재고 롤백
+            RollbackHandler-->>UseCase: 롤백 완료
+            UseCase-->>Controller: Exception
+        end
+
+        UseCase->>PaymentService: 포인트 차감 (@PessimisticLock)
+        Note over PaymentService: 🔒 ReentrantLock (3초 timeout)
+        alt 포인트 부족
+            PaymentService-->>UseCase: Exception
+            UseCase->>RollbackHandler: 쿠폰 + 재고 롤백
+            RollbackHandler-->>UseCase: 롤백 완료
+            UseCase-->>Controller: Exception
+        end
+
+        UseCase->>OrderService: 주문 상태 변경 (PAID)
+        OrderService-->>UseCase: 주문 완료
+
+        UseCase->>CartItemService: 🔄 장바구니 삭제 (@Async)
+        Note over CartItemService: 비동기 처리
+
+        UseCase->>ExternalDataPlatform: 🔄 외부 데이터 플랫폼 전송 (@Async)
+        Note over ExternalDataPlatform: 비동기 처리
+
+        UseCase-->>Controller: 주문 생성 응답
 ```
+
+**동시성 제어:**
+- 재고 차감: Optimistic Lock (ConcurrentHashMap + AtomicLong)
+- 포인트 차감: Pessimistic Lock (ReentrantLock)
+- 실패 시 OrderRollbackHandler를 통한 수동 롤백
