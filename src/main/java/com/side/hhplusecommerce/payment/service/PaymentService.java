@@ -1,5 +1,7 @@
 package com.side.hhplusecommerce.payment.service;
 
+import com.side.hhplusecommerce.common.exception.CustomException;
+import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.payment.PaymentClient;
 import com.side.hhplusecommerce.payment.PaymentResult;
 import com.side.hhplusecommerce.point.domain.UserPoint;
@@ -15,14 +17,17 @@ public class PaymentService {
 
     public PaymentResult processPayment(Long userId, Long orderId, Integer amount) {
         UserPoint userPoint = userPointRepository.findByUserId(userId)
-                .orElseGet(() -> {
-                    UserPoint newUserPoint = UserPoint.initialize(userId);
-                    return userPointRepository.save(newUserPoint);
-                });
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_POINT_NOT_FOUND));
 
-        userPoint.use(amount);
-        userPointRepository.save(userPoint);
+        // 결제 처리
+        PaymentResult paymentResult = paymentClient.pay(orderId, userId, amount);
 
-        return paymentClient.pay(orderId, userId, amount);
+        // 결제 성공 시에만 포인트 차감
+        if (paymentResult.isSuccess()) {
+            userPoint.use(amount);
+            userPointRepository.save(userPoint);
+        }
+
+        return paymentResult;
     }
 }

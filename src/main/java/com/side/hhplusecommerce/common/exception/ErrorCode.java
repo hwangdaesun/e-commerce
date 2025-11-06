@@ -38,7 +38,8 @@ public enum ErrorCode {
 
     // Point
     INVALID_POINT_AMOUNT("Point_001", "포인트 금액은 1 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
-    INSUFFICIENT_POINT("Point_002", "포인트가 부족합니다.", HttpStatus.CONFLICT);
+    INSUFFICIENT_POINT("Point_002", "포인트가 부족합니다.", HttpStatus.CONFLICT),
+    USER_POINT_NOT_FOUND("POINT_003", "사용자 포인트를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
     private final String code;
     private final String message;
