@@ -28,6 +28,14 @@ public class InMemoryUserCouponRepository implements UserCouponRepository {
     }
 
     @Override
+    public Optional<UserCoupon> findByUserIdAndCouponId(Long userId, Long couponId) {
+        return store.values().stream()
+                .filter(userCoupon -> userCoupon.getUserId().equals(userId)
+                        && userCoupon.getCouponId().equals(couponId))
+                .findFirst();
+    }
+
+    @Override
     public UserCoupon save(UserCoupon userCoupon) {
         if (Objects.isNull(userCoupon.getUserCouponId())) {
             Long id = idGenerator.getAndIncrement();
@@ -44,5 +52,10 @@ public class InMemoryUserCouponRepository implements UserCouponRepository {
         }
         store.put(userCoupon.getUserCouponId(), userCoupon);
         return userCoupon;
+    }
+
+    @Override
+    public void delete(UserCoupon userCoupon) {
+        store.remove(userCoupon.getUserCouponId());
     }
 }

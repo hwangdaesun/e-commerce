@@ -8,5 +8,7 @@ import java.util.Optional;
 public interface UserCouponRepository {
     List<UserCoupon> findByUserId(Long userId);
     Optional<UserCoupon> findById(Long userCouponId);
+    Optional<UserCoupon> findByUserIdAndCouponId(Long userId, Long couponId);
     UserCoupon save(UserCoupon userCoupon);
+    void delete(UserCoupon userCoupon);
 }

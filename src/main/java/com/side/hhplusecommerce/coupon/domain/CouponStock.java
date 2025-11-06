@@ -35,6 +35,11 @@ public class CouponStock {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void increase() {
+        this.remainingQuantity++;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public boolean hasRemainingQuantity() {
         return this.remainingQuantity > 0;
     }
