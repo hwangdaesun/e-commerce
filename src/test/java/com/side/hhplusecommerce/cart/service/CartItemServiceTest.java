@@ -1,19 +1,33 @@
 package com.side.hhplusecommerce.cart.service;
 
 import com.side.hhplusecommerce.cart.domain.CartItem;
+import com.side.hhplusecommerce.cart.repository.CartItemRepository;
 import com.side.hhplusecommerce.common.exception.CustomException;
 import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.item.domain.Item;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
+@ExtendWith(MockitoExtension.class)
 class CartItemServiceTest {
 
-    private final CartItemService cartItemService = new CartItemService();
+    @Mock
+    private CartItemRepository cartItemRepository;
+
+    private CartItemService cartItemService;
+
+    @BeforeEach
+    void setUp() {
+        cartItemService = new CartItemService(cartItemRepository);
+    }
 
     @Test
     @DisplayName("장바구니 항목들의 총 금액을 계산한다")
