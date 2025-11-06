@@ -40,6 +40,9 @@ public enum ErrorCode {
     INVALID_POINT_AMOUNT("Point_001", "포인트 금액은 1 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_POINT("Point_002", "포인트가 부족합니다.", HttpStatus.CONFLICT),
     USER_POINT_NOT_FOUND("POINT_003", "사용자 포인트를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    LOCK_TIMEOUT("LOCK_001", "락 획득 시간이 초과되었습니다.", HttpStatus.CONFLICT),
+    LOCK_INTERRUPTED("LOCK_002", "락 처리 중 인터럽트가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    OPTIMISTIC_LOCK_CONFLICT("LOCK_003", "동시 수정으로 인한 충돌이 발생했습니다.", HttpStatus.CONFLICT);
 
     private final String code;
     private final String message;
