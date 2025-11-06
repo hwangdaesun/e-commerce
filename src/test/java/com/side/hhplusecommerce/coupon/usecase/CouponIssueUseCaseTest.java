@@ -46,6 +46,48 @@ class CouponIssueUseCaseTest {
     private CouponIssueUseCase couponIssueUseCase;
 
     @Test
+    @DisplayName("쿠폰 재고 감소 실패 시 UserCoupon 저장이 시도되지 않는다.")
+    void issue_fails_when_stock_decrease_fails() {
+        // given
+        Long couponId = 1L;
+        Long userId = 100L;
+        Integer initialQuantity = 10;
+
+        Coupon coupon = Coupon.builder()
+                .couponId(couponId)
+                .name("Test Coupon")
+                .discountAmount(5000)
+                .totalQuantity(100)
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .build();
+
+        CouponStock couponStock = CouponStock.of(couponId, initialQuantity);
+
+        given(couponRepository.findById(couponId)).willReturn(Optional.of(coupon));
+        given(userCouponRepository.findByUserId(userId)).willReturn(List.of());
+        given(couponStockRepository.findByCouponId(couponId)).willReturn(Optional.of(couponStock));
+
+        // 재고 저장 시 예외 발생 (재고 감소 후 저장 실패)
+        doThrow(new RuntimeException("Stock save failed"))
+                .when(couponStockRepository).save(couponStock);
+
+        // when & then
+        assertThatThrownBy(() -> couponIssueUseCase.issue(couponId, userId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Stock save failed");
+
+        // 재고 저장 시도 1회
+        verify(couponStockRepository).save(couponStock);
+
+        // UserCoupon 저장은 시도조차 되지 않아야 함
+        verify(userCouponRepository, never()).save(any(UserCoupon.class));
+
+        // 롤백 로직도 실행되지 않음 (try 블록 진입 전 실패)
+        verify(userCouponRepository, never()).findByUserIdAndCouponId(userId, couponId);
+        verify(userCouponRepository, never()).delete(any(UserCoupon.class));
+    }
+
+    @Test
     @DisplayName("UserCoupon 저장 실패 시 쿠폰 재고를 롤백한다.")
     void issue_rollback_on_user_coupon_save_failure() {
         // given
