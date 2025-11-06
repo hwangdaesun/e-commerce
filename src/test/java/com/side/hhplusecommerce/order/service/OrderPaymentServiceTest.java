@@ -2,18 +2,15 @@ package com.side.hhplusecommerce.order.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
-import com.side.hhplusecommerce.common.exception.CustomException;
-import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.order.domain.Order;
 import com.side.hhplusecommerce.order.domain.OrderStatus;
 import com.side.hhplusecommerce.order.repository.OrderRepository;
-import com.side.hhplusecommerce.payment.PaymentResult;
-import com.side.hhplusecommerce.payment.service.PaymentService;
+import com.side.hhplusecommerce.payment.service.UserPointService;
+import com.side.hhplusecommerce.point.exception.InsufficientPointException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class OrderPaymentServiceTest {
 
     @Mock
-    private PaymentService paymentService;
+    private UserPointService userPointService;
 
     @Mock
     private OrderRepository orderRepository;
@@ -34,38 +31,36 @@ class OrderPaymentServiceTest {
     private OrderPaymentService orderPaymentService;
 
     @Test
-    @DisplayName("결제가 성공하면 주문 상태가 PAID로 변경된다")
+    @DisplayName("포인트 차감이 성공하면 주문 상태가 PAID로 변경된다")
     void processOrderPayment_success() {
         // given
         Long userId = 1L;
         Order order = Order.create(1L, userId, 10000, 1000);
 
-        given(paymentService.processPayment(userId, order.getOrderId(), order.getFinalAmount()))
-                .willReturn(PaymentResult.success());
+        doNothing().when(userPointService).use(userId, order.getFinalAmount());
 
         // when
         orderPaymentService.processOrderPayment(userId, order);
 
         // then
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
-        verify(paymentService).processPayment(userId, order.getOrderId(), order.getFinalAmount());
+        verify(userPointService).use(userId, order.getFinalAmount());
         verify(orderRepository).save(order);
     }
 
     @Test
-    @DisplayName("결제가 실패하면 예외를 발생시킨다")
-    void processOrderPayment_fail_payment() {
+    @DisplayName("포인트가 부족하면 예외를 발생시킨다")
+    void processOrderPayment_fail_insufficient_point() {
         // given
         Long userId = 1L;
         Order order = Order.create(1L, userId, 10000, 1000);
 
-        given(paymentService.processPayment(anyLong(), anyLong(), anyInt()))
-                .willReturn(PaymentResult.failure("포인트 부족"));
+        doThrow(new InsufficientPointException())
+                .when(userPointService).use(userId, order.getFinalAmount());
 
         // when & then
         assertThatThrownBy(() -> orderPaymentService.processOrderPayment(userId, order))
-                .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.INSUFFICIENT_POINT.getMessage());
+                .isInstanceOf(InsufficientPointException.class);
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
     }
@@ -79,8 +74,7 @@ class OrderPaymentServiceTest {
         Integer couponDiscount = 10000;
         Order order = Order.create(1L, userId, totalAmount, couponDiscount);
 
-        given(paymentService.processPayment(userId, order.getOrderId(), 0))
-                .willReturn(PaymentResult.success());
+        doNothing().when(userPointService).use(userId, 0);
 
         // when
         orderPaymentService.processOrderPayment(userId, order);
