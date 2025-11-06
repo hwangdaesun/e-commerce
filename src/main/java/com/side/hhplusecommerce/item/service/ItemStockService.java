@@ -30,4 +30,18 @@ public class ItemStockService {
             }
         }
     }
+
+    public void increaseStock(List<CartItem> cartItems, List<Item> items) {
+        Map<Long, Item> itemMap = items.stream()
+                .collect(Collectors.toMap(Item::getItemId, item -> item));
+
+        for (CartItem cartItem : cartItems) {
+            Item item = itemMap.get(cartItem.getItemId());
+            if (item != null) {
+                item.increase(cartItem.getQuantity());
+                item.decreaseSalesCount(cartItem.getQuantity());
+                itemRepository.save(item);
+            }
+        }
+    }
 }

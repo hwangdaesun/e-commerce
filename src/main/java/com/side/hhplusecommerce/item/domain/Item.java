@@ -46,4 +46,11 @@ public class Item extends BaseEntity {
         }
         this.salesCount += quantity;
     }
+
+    public void decreaseSalesCount(Integer quantity) {
+        if (Objects.isNull(quantity) || quantity <= 0) {
+            throw new InvalidSalesQuantityException();
+        }
+        this.salesCount -= quantity;
+    }
 }
