@@ -22,18 +22,12 @@ public class ItemStockService {
                 .collect(Collectors.toMap(Item::getItemId, item -> item));
 
         for (CartItem cartItem : cartItems) {
-            Item item = itemMap.get(cartItem.getItemId());
-            if (item == null) {
-                throw new CustomException(ErrorCode.ITEM_NOT_FOUND);
+            if(itemMap.containsKey(cartItem.getItemId())){
+                Item item = itemMap.get(cartItem.getItemId());
+                item.decrease(cartItem.getQuantity());
+                item.increaseSalesCount(cartItem.getQuantity());
+                itemRepository.save(item);
             }
-
-            if (!item.hasEnoughQuantity(cartItem.getQuantity())) {
-                throw new CustomException(ErrorCode.INSUFFICIENT_STOCK);
-            }
-
-            item.decrease(cartItem.getQuantity());
-            item.increaseSalesCount(cartItem.getQuantity());
-            itemRepository.save(item);
         }
     }
 }
