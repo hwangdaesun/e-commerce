@@ -21,4 +21,9 @@ public class InMemoryUserPointRepository implements UserPointRepository {
         store.put(userPoint.getUserId(), userPoint);
         return userPoint;
     }
+
+    @Override
+    public void deleteAll() {
+        store.clear();
+    }
 }

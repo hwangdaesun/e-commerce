@@ -62,4 +62,10 @@ public class InMemoryItemRepository implements ItemRepository {
             store.put(item.getItemId(), item);
         }
     }
+
+    @Override
+    public void deleteAll() {
+        store.clear();
+        idGenerator.set(1);
+    }
 }

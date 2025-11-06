@@ -58,4 +58,10 @@ public class InMemoryUserCouponRepository implements UserCouponRepository {
     public void delete(UserCoupon userCoupon) {
         store.remove(userCoupon.getUserCouponId());
     }
+
+    @Override
+    public void deleteAll() {
+        store.clear();
+        idGenerator.set(1);
+    }
 }

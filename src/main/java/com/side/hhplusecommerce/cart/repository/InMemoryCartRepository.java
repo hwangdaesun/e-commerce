@@ -35,4 +35,10 @@ public class InMemoryCartRepository implements CartRepository {
         store.put(cart.getCartId(), cart);
         return cart;
     }
+
+    @Override
+    public void deleteAll() {
+        store.clear();
+        idGenerator.set(1);
+    }
 }

@@ -21,4 +21,9 @@ public class InMemoryCouponStockRepository implements CouponStockRepository {
         store.put(couponStock.getCouponId(), couponStock);
         return couponStock;
     }
+
+    @Override
+    public void deleteAll() {
+        store.clear();
+    }
 }

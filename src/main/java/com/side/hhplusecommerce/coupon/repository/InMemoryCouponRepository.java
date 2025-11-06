@@ -36,4 +36,10 @@ public class InMemoryCouponRepository implements CouponRepository {
         store.put(coupon.getCouponId(), coupon);
         return coupon;
     }
+
+    @Override
+    public void deleteAll() {
+        store.clear();
+        idGenerator.set(1);
+    }
 }

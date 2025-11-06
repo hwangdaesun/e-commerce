@@ -11,4 +11,5 @@ public interface UserCouponRepository {
     Optional<UserCoupon> findByUserIdAndCouponId(Long userId, Long couponId);
     UserCoupon save(UserCoupon userCoupon);
     void delete(UserCoupon userCoupon);
+    void deleteAll();
 }

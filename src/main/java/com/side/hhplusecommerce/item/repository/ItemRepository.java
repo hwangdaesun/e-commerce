@@ -12,4 +12,5 @@ public interface ItemRepository {
     List<Item> findPopularItems(Integer limit, LocalDateTime after);
     List<Item> findAllByIds(List<Long> itemIds);
     void save(Item item);
+    void deleteAll();
 }

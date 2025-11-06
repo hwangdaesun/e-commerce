@@ -51,4 +51,10 @@ public class InMemoryCartItemRepository implements CartItemRepository {
                 .filter(Objects::nonNull)
                 .toList();
     }
+
+    @Override
+    public void deleteAll() {
+        store.clear();
+        idGenerator.set(1);
+    }
 }
