@@ -1,7 +1,9 @@
 package com.side.hhplusecommerce.order.usecase;
 
+import com.side.hhplusecommerce.cart.domain.Cart;
 import com.side.hhplusecommerce.cart.domain.CartItem;
 import com.side.hhplusecommerce.cart.domain.CartItemValidator;
+import com.side.hhplusecommerce.cart.repository.CartRepository;
 import com.side.hhplusecommerce.cart.service.CartItemService;
 import com.side.hhplusecommerce.coupon.domain.Coupon;
 import com.side.hhplusecommerce.coupon.service.CouponService;
@@ -12,6 +14,7 @@ import com.side.hhplusecommerce.item.service.ItemStockService;
 import com.side.hhplusecommerce.order.controller.dto.CreateOrderResponse;
 import com.side.hhplusecommerce.order.domain.Order;
 import com.side.hhplusecommerce.order.domain.OrderItem;
+import com.side.hhplusecommerce.order.service.ExternalDataPlatformService;
 import com.side.hhplusecommerce.order.service.OrderPaymentService;
 import com.side.hhplusecommerce.order.service.OrderRollbackHandler;
 import com.side.hhplusecommerce.order.service.OrderService;
@@ -32,6 +35,8 @@ public class OrderCreateUseCase {
     private final OrderService orderService;
     private final OrderPaymentService orderPaymentService;
     private final OrderRollbackHandler orderRollbackHandler;
+    private final CartRepository cartRepository;
+    private final ExternalDataPlatformService externalDataPlatformService;
 
     public CreateOrderResponse create(Long userId, List<Long> cartItemIds, Long userCouponId) {
 
@@ -83,6 +88,15 @@ public class OrderCreateUseCase {
             orderRollbackHandler.rollbackForPaymentFailure(userCouponId, validCartItems, items);
             throw e;
         }
+
+        // 비동기로 장바구니 삭제 (주문 완료 후)
+        Cart cart = cartRepository.findByUserId(userId).orElse(null);
+        if (Objects.nonNull(cart)) {
+            cartItemService.deleteCartItemsAsync(cart.getCartId());
+        }
+
+        // 비동기로 외부 데이터 플랫폼 전송
+        externalDataPlatformService.sendOrderDataAsync(savedOrder);
 
         return CreateOrderResponse.of(savedOrder, savedOrderItems, coupon);
     }

@@ -53,6 +53,11 @@ public class InMemoryCartItemRepository implements CartItemRepository {
     }
 
     @Override
+    public void deleteByCartId(Long cartId) {
+        store.entrySet().removeIf(entry -> entry.getValue().getCartId().equals(cartId));
+    }
+
+    @Override
     public void deleteAll() {
         store.clear();
         idGenerator.set(1);
