@@ -32,7 +32,7 @@ class UserPointServiceTest {
 
     @Test
     @DisplayName("사용자 포인트를 차감한다")
-    void use_success() {
+    void use_PointWithPessimisticLock_success() {
         // given
         Long userId = 1L;
         Integer amount = 10000;
@@ -44,7 +44,7 @@ class UserPointServiceTest {
         given(userPointRepository.findByUserId(userId)).willReturn(Optional.of(userPoint));
 
         // when
-        userPointService.use(userId, amount);
+        userPointService.usePointWithPessimisticLock(userId, amount);
 
         // then
         assertThat(userPoint.getPoint()).isEqualTo(40000);
@@ -54,7 +54,7 @@ class UserPointServiceTest {
 
     @Test
     @DisplayName("사용자 포인트가 없으면 예외를 발생시킨다")
-    void use_fail_user_point_not_found() {
+    void use_PointWithPessimisticLock_fail_user_point_not_found() {
         // given
         Long userId = 1L;
         Integer amount = 10000;
@@ -62,7 +62,7 @@ class UserPointServiceTest {
         given(userPointRepository.findByUserId(userId)).willReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> userPointService.use(userId, amount))
+        assertThatThrownBy(() -> userPointService.usePointWithPessimisticLock(userId, amount))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.USER_POINT_NOT_FOUND.getMessage());
 
@@ -71,7 +71,7 @@ class UserPointServiceTest {
 
     @Test
     @DisplayName("포인트가 부족하면 예외를 발생시킨다")
-    void use_fail_insufficient_point() {
+    void use_PointWithPessimisticLock_fail_insufficient_point() {
         // given
         Long userId = 1L;
         Integer amount = 10000;
@@ -83,7 +83,7 @@ class UserPointServiceTest {
         given(userPointRepository.findByUserId(userId)).willReturn(Optional.of(userPoint));
 
         // when & then
-        assertThatThrownBy(() -> userPointService.use(userId, amount))
+        assertThatThrownBy(() -> userPointService.usePointWithPessimisticLock(userId, amount))
                 .isInstanceOf(InsufficientPointException.class);
 
         verify(userPointRepository).findByUserId(userId);
@@ -92,7 +92,7 @@ class UserPointServiceTest {
     @ParameterizedTest
     @ValueSource(ints = {0, -1, -100, -1000})
     @DisplayName("차감 금액이 0 이하면 예외를 발생시킨다")
-    void use_fail_invalid_amount(Integer amount) {
+    void use_PointWithPessimisticLock_fail_invalid_amount(Integer amount) {
         // given
         Long userId = 1L;
         Integer initialPoint = 10000;
@@ -103,7 +103,7 @@ class UserPointServiceTest {
         given(userPointRepository.findByUserId(userId)).willReturn(Optional.of(userPoint));
 
         // when & then
-        assertThatThrownBy(() -> userPointService.use(userId, amount))
+        assertThatThrownBy(() -> userPointService.usePointWithPessimisticLock(userId, amount))
                 .isInstanceOf(InvalidPointAmountException.class);
     }
 }

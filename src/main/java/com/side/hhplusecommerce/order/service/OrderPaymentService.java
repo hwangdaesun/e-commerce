@@ -13,7 +13,7 @@ public class OrderPaymentService {
     private final OrderRepository orderRepository;
 
     public void processOrderPayment(Long userId, Order order) {
-        userPointService.use(userId, order.getFinalAmount());
+        userPointService.usePointWithPessimisticLock(userId, order.getFinalAmount());
 
         order.completePay();
         orderRepository.save(order);

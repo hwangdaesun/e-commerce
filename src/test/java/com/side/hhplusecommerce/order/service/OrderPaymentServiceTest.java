@@ -37,14 +37,14 @@ class OrderPaymentServiceTest {
         Long userId = 1L;
         Order order = Order.create(1L, userId, 10000, 1000);
 
-        doNothing().when(userPointService).use(userId, order.getFinalAmount());
+        doNothing().when(userPointService).usePointWithPessimisticLock(userId, order.getFinalAmount());
 
         // when
         orderPaymentService.processOrderPayment(userId, order);
 
         // then
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
-        verify(userPointService).use(userId, order.getFinalAmount());
+        verify(userPointService).usePointWithPessimisticLock(userId, order.getFinalAmount());
         verify(orderRepository).save(order);
     }
 
@@ -56,7 +56,7 @@ class OrderPaymentServiceTest {
         Order order = Order.create(1L, userId, 10000, 1000);
 
         doThrow(new InsufficientPointException())
-                .when(userPointService).use(userId, order.getFinalAmount());
+                .when(userPointService).usePointWithPessimisticLock(userId, order.getFinalAmount());
 
         // when & then
         assertThatThrownBy(() -> orderPaymentService.processOrderPayment(userId, order))
@@ -74,7 +74,7 @@ class OrderPaymentServiceTest {
         Integer couponDiscount = 10000;
         Order order = Order.create(1L, userId, totalAmount, couponDiscount);
 
-        doNothing().when(userPointService).use(userId, 0);
+        doNothing().when(userPointService).usePointWithPessimisticLock(userId, 0);
 
         // when
         orderPaymentService.processOrderPayment(userId, order);
