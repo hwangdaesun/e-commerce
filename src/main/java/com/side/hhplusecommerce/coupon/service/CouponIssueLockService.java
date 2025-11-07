@@ -26,6 +26,7 @@ public class CouponIssueLockService {
     private final CouponStockRepository couponStockRepository;
     private final UserCouponRepository userCouponRepository;
     private final CouponIssueValidator couponIssueValidator;
+    private final CouponRollbackHandler couponRollbackHandler;
 
     @PessimisticLock(timeout = 3)
     public IssueCouponResponse issueCouponWithPessimisticLock(Long couponId, Long userId) {
@@ -51,21 +52,8 @@ public class CouponIssueLockService {
             return IssueCouponResponse.of(savedUserCoupon, coupon);
 
         } catch (Exception e) {
-            rollbackCouponStock(couponStock, couponId, userId);
+            couponRollbackHandler.rollbackCouponStock(couponStock, couponId, userId);
             throw e;
-        }
-    }
-
-    private void rollbackCouponStock(CouponStock couponStock, Long couponId, Long userId) {
-        try {
-            couponStock.increase();
-            couponStockRepository.save(couponStock);
-
-            userCouponRepository.findByUserIdAndCouponId(userId, couponId)
-                    .ifPresent(userCouponRepository::delete);
-
-        } catch (Exception rollbackException) {
-            log.error("Failed to rollback coupon issue: couponId={}, userId={}", couponId, userId, rollbackException);
         }
     }
 
