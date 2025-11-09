@@ -1,5 +1,6 @@
 package com.side.hhplusecommerce.item.controller.dto;
 
+import com.side.hhplusecommerce.item.domain.Item;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,4 +17,12 @@ public class ItemStockResponse {
 
     @Schema(description = "재고 수량", example = "50")
     private Integer stock;
+
+    public static ItemStockResponse from(Item item) {
+        return new ItemStockResponse(
+                item.getItemId(),
+                item.getName(),
+                item.getStock()
+        );
+    }
 }
