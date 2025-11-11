@@ -10,6 +10,8 @@ import com.side.hhplusecommerce.item.domain.ItemValidator;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
 import com.side.hhplusecommerce.item.service.ItemPopularityService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.side.hhplusecommerce.item.repository.ItemViewRepository;
@@ -34,9 +36,12 @@ public class ItemViewUseCase {
     }
 
     public ItemsResponse view(CursorRequest cursorRequest) {
+        Pageable pageable =
+            PageRequest.of(0, cursorRequest.getSize() + 1);
+
         List<Item> items = itemRepository.findAllWithCursor(
                 cursorRequest.getCursor(),
-                cursorRequest.getSize()
+                pageable
         );
 
         boolean hasNext = items.size() > cursorRequest.getSize();
@@ -61,15 +66,22 @@ public class ItemViewUseCase {
 
     public PopularItemsResponse viewPopular(Integer limit) {
         LocalDateTime threeDaysAgo = LocalDateTime.now().minusDays(3);
-        List<Item> items = itemRepository.findPopularItems(limit, threeDaysAgo);
+        Pageable pageable =
+            PageRequest.of(0, limit);
+
+        List<Item> items = itemRepository.findPopularItems(threeDaysAgo, pageable);
         List<Long> itemIds = items.stream()
                 .map(Item::getItemId)
-                .collect(Collectors.toList());
+                .toList();
 
-        Map<Long, Long> viewCount = itemViewRepository.countByItemIdsAndCreatedAtAfter(itemIds, threeDaysAgo);
+        Map<Long, Long> viewCount = new java.util.HashMap<>();
+        for (Long itemId : itemIds) {
+            Long count = itemViewRepository.countByItemIdAndCreatedAtAfter(itemId, threeDaysAgo);
+            viewCount.put(itemId, count);
+        }
         List<Long> popularItemIds = itemPopularityService.getPopularItemIds(items, viewCount, limit);
 
-        List<Item> popularItems = itemRepository.findAllByIds(popularItemIds);
+        List<Item> popularItems = itemRepository.findAllByItemIdIn(popularItemIds);
         return PopularItemsResponse.of(popularItems);
     }
 }
