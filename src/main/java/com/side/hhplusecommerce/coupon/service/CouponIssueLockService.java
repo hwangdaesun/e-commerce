@@ -2,7 +2,6 @@ package com.side.hhplusecommerce.coupon.service;
 
 import com.side.hhplusecommerce.common.exception.CustomException;
 import com.side.hhplusecommerce.common.exception.ErrorCode;
-import com.side.hhplusecommerce.common.lock.PessimisticLock;
 import com.side.hhplusecommerce.coupon.controller.dto.IssueCouponResponse;
 import com.side.hhplusecommerce.coupon.domain.Coupon;
 import com.side.hhplusecommerce.coupon.domain.CouponIssueValidator;
@@ -14,6 +13,7 @@ import com.side.hhplusecommerce.coupon.repository.UserCouponRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,14 +21,14 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional(readOnly = true)
 public class CouponIssueLockService {
     private final CouponRepository couponRepository;
     private final CouponStockRepository couponStockRepository;
     private final UserCouponRepository userCouponRepository;
     private final CouponIssueValidator couponIssueValidator;
-    private final CouponRollbackHandler couponRollbackHandler;
 
-    @PessimisticLock(timeout = 3)
+    @Transactional
     public IssueCouponResponse issueCouponWithPessimisticLock(Long couponId, Long userId) {
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
@@ -40,21 +40,15 @@ public class CouponIssueLockService {
         List<UserCoupon> userCoupons = userCouponRepository.findByUserId(userId);
         couponIssueValidator.validateNotAlreadyIssued(couponId, userCoupons);
 
-        CouponStock couponStock = couponStockRepository.findByCouponId(couponId)
+        CouponStock couponStock = couponStockRepository.findByCouponIdWithPessimisticLock(couponId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
 
         couponStock.decrease();
         couponStockRepository.save(couponStock);
 
-        try {
-            UserCoupon userCoupon = UserCoupon.issue(userId, couponId);
-            UserCoupon savedUserCoupon = userCouponRepository.save(userCoupon);
-            return IssueCouponResponse.of(savedUserCoupon, coupon);
-
-        } catch (Exception e) {
-            couponRollbackHandler.rollbackCouponStock(couponStock, couponId, userId);
-            throw e;
-        }
+        UserCoupon userCoupon = UserCoupon.issue(userId, couponId);
+        UserCoupon savedUserCoupon = userCouponRepository.save(userCoupon);
+        return IssueCouponResponse.of(savedUserCoupon, coupon);
     }
 
     private boolean isExpired(LocalDateTime expiresAt) {
