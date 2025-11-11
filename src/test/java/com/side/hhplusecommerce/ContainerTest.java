@@ -1,11 +1,14 @@
 package com.side.hhplusecommerce;
 
+import com.side.hhplusecommerce.support.DatabaseClearExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.MySQLContainer;
 
 @ActiveProfiles("test")
+@ExtendWith(DatabaseClearExtension.class)
 public abstract class ContainerTest {
     static final String MYSQL_IMAGE = "mysql:8.0";
     static final MySQLContainer<?> MYSQL_CONTAINER;
