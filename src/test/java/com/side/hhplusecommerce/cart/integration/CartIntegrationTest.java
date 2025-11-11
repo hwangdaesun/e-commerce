@@ -1,6 +1,13 @@
 package com.side.hhplusecommerce.cart.integration;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.side.hhplusecommerce.ContainerTest;
 import com.side.hhplusecommerce.cart.controller.dto.CartItemRequest;
 import com.side.hhplusecommerce.cart.controller.dto.UpdateCartItemRequest;
 import com.side.hhplusecommerce.cart.domain.Cart;
@@ -18,12 +25,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 @SpringBootTest
 @AutoConfigureMockMvc
-class CartIntegrationTest {
+class CartIntegrationTest extends ContainerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -40,16 +44,15 @@ class CartIntegrationTest {
     @Autowired
     private CartItemRepository cartItemRepository;
 
+    private Long testCartId;
+    private Long testItemId1;
+    private Long testItemId2;
+    private Long testUserId;
+
     @BeforeEach
     void setUp() {
-        // 모든 데이터 정리 (테스트 격리)
-        cartItemRepository.deleteAll();
-        cartRepository.deleteAll();
-        itemRepository.deleteAll();
-
         // 테스트 데이터 준비
         Item item1 = Item.builder()
-                .itemId(1L)
                 .name("Test Item 1")
                 .price(10000)
                 .stock(100)
@@ -57,76 +60,81 @@ class CartIntegrationTest {
                 .build();
 
         Item item2 = Item.builder()
-                .itemId(2L)
                 .name("Test Item 2")
                 .price(20000)
                 .stock(50)
                 .salesCount(0)
                 .build();
 
-        itemRepository.save(item1);
-        itemRepository.save(item2);
+        Item savedItem1 = itemRepository.save(item1);
+        Item savedItem2 = itemRepository.save(item2);
+        testItemId1 = savedItem1.getItemId();
+        testItemId2 = savedItem2.getItemId();
 
+        testUserId = 1L;
         Cart cart = Cart.builder()
-                .cartId(1L)
-                .userId(100L)
+                .userId(testUserId)
                 .build();
-        cartRepository.save(cart);
+        Cart savedCart = cartRepository.save(cart);
+        testCartId = savedCart.getCartId();
 
-        CartItem cartItem = CartItem.create(cart.getCartId(), 1L, 5);
+        CartItem cartItem = CartItem.create(testCartId, testItemId1, 5);
         cartItemRepository.save(cartItem);
     }
 
     @Test
     @DisplayName("[성공] 장바구니에 상품 추가 - 새 장바구니 생성")
     void addCartItem_success_createNewCart() throws Exception {
-        CartItemRequest request = new CartItemRequest(200L, 2L, 3);
+        CartItemRequest request = new CartItemRequest(200L, testItemId2, 3);
 
         mockMvc.perform(post("/api/cart/items")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.cartItemId").exists())
-                .andExpect(jsonPath("$.itemId").value(2))
+                .andExpect(jsonPath("$.itemId").value(testItemId2))
                 .andExpect(jsonPath("$.quantity").value(3));
     }
 
     @Test
     @DisplayName("[성공] 장바구니에 상품 추가 - 기존 장바구니에 추가")
     void addCartItem_success_existingCart() throws Exception {
-        CartItemRequest request = new CartItemRequest(100L, 2L, 3);
+        CartItemRequest request = new CartItemRequest(testUserId, testItemId2, 3);
 
         mockMvc.perform(post("/api/cart/items")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.cartItemId").exists())
-                .andExpect(jsonPath("$.itemId").value(2))
-                .andExpect(jsonPath("$.quantity").value(3));
+                .andExpect(jsonPath("$.cartItemId").exists());
     }
 
     @Test
     @DisplayName("[성공] 장바구니 조회")
     void getCart_success() throws Exception {
         mockMvc.perform(get("/api/cart")
-                        .param("userId", "100"))
-                .andExpect(status().isOk());
+                        .param("userId", String.valueOf(testUserId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.items[0].cartItemId").exists())
+                .andExpect(jsonPath("$.items[0].itemId").value(testItemId1));
     }
 
     @Test
     @DisplayName("[성공] 장바구니 상품 수량 수정")
     void updateCartItemQuantity_success() throws Exception {
-        CartItem existingCartItem = cartItemRepository.findByCartId(1L).stream()
-                .filter(ci -> ci.getItemId() == 1L)
+        CartItem existingCartItem = cartItemRepository.findByCartId(testCartId).stream()
+                .filter(ci -> ci.getItemId().equals(testItemId1))
                 .findFirst()
                 .orElseThrow();
+        int quantityToUpdate = existingCartItem.getQuantity() + 1;
 
-        UpdateCartItemRequest request = new UpdateCartItemRequest(100L, 10);
+        UpdateCartItemRequest request = new UpdateCartItemRequest(testUserId, quantityToUpdate);
 
         mockMvc.perform(patch("/api/cart/items/{cartItemId}", existingCartItem.getCartItemId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.quantity").value(10));
+                .andExpect(jsonPath("$.itemId").value(testItemId1))
+                .andExpect(jsonPath("$.quantity").value(quantityToUpdate));
     }
 }

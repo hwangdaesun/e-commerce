@@ -72,7 +72,7 @@ class ItemValidatorTest {
                 Item.builder().itemId(3L).name("Item 3").price(30000).stock(300).build()
         );
 
-        given(itemRepository.findAllByIds(itemIds)).willReturn(items);
+        given(itemRepository.findAllByItemIdIn(itemIds)).willReturn(items);
 
         // when
         List<Item> result = itemValidator.validateExistence(itemIds);
@@ -93,7 +93,7 @@ class ItemValidatorTest {
                 Item.builder().itemId(2L).name("Item 2").price(20000).stock(200).build()
         );
 
-        given(itemRepository.findAllByIds(itemIds)).willReturn(items);
+        given(itemRepository.findAllByItemIdIn(itemIds)).willReturn(items);
 
         // when & then
         assertThatThrownBy(() -> itemValidator.validateExistence(itemIds))
