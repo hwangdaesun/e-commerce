@@ -16,13 +16,13 @@ import com.side.hhplusecommerce.order.domain.Order;
 import com.side.hhplusecommerce.order.domain.OrderItem;
 import com.side.hhplusecommerce.order.service.ExternalDataPlatformService;
 import com.side.hhplusecommerce.order.service.OrderPaymentService;
-import com.side.hhplusecommerce.order.service.OrderRollbackHandler;
 import com.side.hhplusecommerce.order.service.OrderService;
 import com.side.hhplusecommerce.order.service.dto.OrderCreateResult;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,10 +34,10 @@ public class OrderCreateUseCase {
     private final CouponService couponService;
     private final OrderService orderService;
     private final OrderPaymentService orderPaymentService;
-    private final OrderRollbackHandler orderRollbackHandler;
     private final CartRepository cartRepository;
     private final ExternalDataPlatformService externalDataPlatformService;
 
+    @Transactional
     public CreateOrderResponse create(Long userId, List<Long> cartItemIds, Long userCouponId) {
 
         // 장바구니 검증
@@ -56,38 +56,19 @@ public class OrderCreateUseCase {
         }
 
         // 재고 확인 및 차감
-        try {
-            itemStockService.decreaseStock(validCartItems, items);
-        } catch (Exception e) {
-            // 재고 차감 실패 시: 쿠폰만 롤백
-            orderRollbackHandler.rollbackForStockFailure(userCouponId);
-            throw e;
-        }
+        itemStockService.decreaseStock(validCartItems, items);
 
         Integer totalAmount = cartItemService.calculateTotalAmount(validCartItems, items);
 
         // 주문 생성
-        OrderCreateResult orderCreateResult;
-        try {
-            orderCreateResult = orderService.createOrder(
-                    userId, validCartItems, items, totalAmount, couponDiscount, userCouponId);
-        } catch (Exception e) {
-            // 주문 생성 실패 시: 쿠폰 + 재고 롤백
-            orderRollbackHandler.rollbackForOrderCreationFailure(userCouponId, validCartItems, items);
-            throw e;
-        }
+        OrderCreateResult orderCreateResult = orderService.createOrder(
+                userId, validCartItems, items, totalAmount, couponDiscount, userCouponId);
 
         Order savedOrder = orderCreateResult.getOrder();
         List<OrderItem> savedOrderItems = orderCreateResult.getOrderItems();
 
         // 결제 처리
-        try {
-            orderPaymentService.processOrderPayment(userId, savedOrder);
-        } catch (Exception e) {
-            // 결제 실패 시: 쿠폰 + 재고 롤백 (주문은 취소 상태로 유지)
-            orderRollbackHandler.rollbackForPaymentFailure(userCouponId, validCartItems, items);
-            throw e;
-        }
+        orderPaymentService.processOrderPayment(userId, savedOrder);
 
         // 비동기로 장바구니 삭제 (주문 완료 후)
         Cart cart = cartRepository.findByUserId(userId).orElse(null);

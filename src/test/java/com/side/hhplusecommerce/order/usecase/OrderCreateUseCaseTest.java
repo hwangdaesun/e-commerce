@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.side.hhplusecommerce.cart.domain.CartItem;
@@ -20,9 +19,10 @@ import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.domain.ItemValidator;
 import com.side.hhplusecommerce.item.exception.InsufficientStockException;
 import com.side.hhplusecommerce.item.service.ItemStockService;
+import com.side.hhplusecommerce.cart.repository.CartRepository;
 import com.side.hhplusecommerce.order.domain.Order;
+import com.side.hhplusecommerce.order.service.ExternalDataPlatformService;
 import com.side.hhplusecommerce.order.service.OrderPaymentService;
-import com.side.hhplusecommerce.order.service.OrderRollbackHandler;
 import com.side.hhplusecommerce.order.service.OrderService;
 import com.side.hhplusecommerce.order.service.dto.OrderCreateResult;
 import com.side.hhplusecommerce.point.exception.InsufficientPointException;
@@ -60,7 +60,10 @@ class OrderCreateUseCaseTest {
     private OrderPaymentService orderPaymentService;
 
     @Mock
-    private OrderRollbackHandler orderRollbackHandler;
+    private CartRepository cartRepository;
+
+    @Mock
+    private ExternalDataPlatformService externalDataPlatformService;
 
     @InjectMocks
     private OrderCreateUseCase orderCreateUseCase;
@@ -105,7 +108,7 @@ class OrderCreateUseCaseTest {
     }
 
     @Test
-    @DisplayName("재고 차감 실패 시 쿠폰만 롤백한다")
+    @DisplayName("재고 차감 실패 시 예외가 발생한다")
     void rollbackCouponOnStockDecreaseFail() {
         // given
         when(cartItemValidator.validateOwnership(userId, cartItemIds)).thenReturn(validCartItems);
@@ -116,13 +119,10 @@ class OrderCreateUseCaseTest {
         // when & then
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, userCouponId))
                 .isInstanceOf(InsufficientStockException.class);
-
-        // 쿠폰만 롤백되어야 함
-        verify(orderRollbackHandler).rollbackForStockFailure(userCouponId);
     }
 
     @Test
-    @DisplayName("재고 차감 실패 시 쿠폰을 사용하지 않았다면 롤백하지 않는다")
+    @DisplayName("재고 차감 실패 시 쿠폰을 사용하지 않아도 예외가 발생한다")
     void noRollbackWhenNoCouponUsedOnStockDecreaseFail() {
         // given - userCouponId를 null로 설정
         when(cartItemValidator.validateOwnership(userId, cartItemIds)).thenReturn(validCartItems);
@@ -132,13 +132,10 @@ class OrderCreateUseCaseTest {
         // when & then
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, null))
                 .isInstanceOf(InsufficientStockException.class);
-
-        // 쿠폰을 사용하지 않았으므로 null이 전달됨
-        verify(orderRollbackHandler).rollbackForStockFailure(null);
     }
 
     @Test
-    @DisplayName("주문 생성 실패 시 쿠폰과 재고를 롤백한다")
+    @DisplayName("주문 생성 실패 시 예외가 발생한다")
     void rollbackCouponAndStockOnOrderCreationFail() {
         // given
         when(cartItemValidator.validateOwnership(userId, cartItemIds)).thenReturn(validCartItems);
@@ -152,13 +149,10 @@ class OrderCreateUseCaseTest {
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, userCouponId))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("주문 생성 실패");
-
-        // 쿠폰 + 재고 롤백되어야 함
-        verify(orderRollbackHandler).rollbackForOrderCreationFailure(userCouponId, validCartItems, items);
     }
 
     @Test
-    @DisplayName("주문 생성 실패 시 쿠폰을 사용하지 않았어도 재고는 롤백한다")
+    @DisplayName("주문 생성 실패 시 쿠폰을 사용하지 않아도 예외가 발생한다")
     void rollbackStockOnOrderCreationFailWithoutCoupon() {
         // given
         when(cartItemValidator.validateOwnership(userId, cartItemIds)).thenReturn(validCartItems);
@@ -171,13 +165,10 @@ class OrderCreateUseCaseTest {
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, null))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("주문 생성 실패");
-
-        // 쿠폰 미사용이므로 userCouponId는 null
-        verify(orderRollbackHandler).rollbackForOrderCreationFailure(null, validCartItems, items);
     }
 
     @Test
-    @DisplayName("결제 실패 시 쿠폰과 재고를 롤백한다")
+    @DisplayName("결제 실패 시 예외가 발생한다")
     void rollbackCouponAndStockOnPaymentFail() {
         // given
         Order mockOrder = mock(Order.class);
@@ -195,13 +186,10 @@ class OrderCreateUseCaseTest {
         // when & then
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, userCouponId))
                 .isInstanceOf(InsufficientPointException.class);
-
-        // 쿠폰 + 재고 롤백되어야 함
-        verify(orderRollbackHandler).rollbackForPaymentFailure(userCouponId, validCartItems, items);
     }
 
     @Test
-    @DisplayName("결제 실패 시 쿠폰을 사용하지 않았어도 재고는 롤백한다")
+    @DisplayName("결제 실패 시 쿠폰을 사용하지 않아도 예외가 발생한다")
     void rollbackStockOnPaymentFailWithoutCoupon() {
         // given
         Order mockOrder = mock(Order.class);
@@ -218,8 +206,5 @@ class OrderCreateUseCaseTest {
         // when & then
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, null))
                 .isInstanceOf(InsufficientPointException.class);
-
-        // 쿠폰 미사용이므로 userCouponId는 null
-        verify(orderRollbackHandler).rollbackForPaymentFailure(null, validCartItems, items);
     }
 }
