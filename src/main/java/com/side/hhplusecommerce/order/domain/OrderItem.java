@@ -4,20 +4,41 @@ import com.side.hhplusecommerce.order.exception.InvalidOrderItemItemIdException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemOrderIdException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemPriceException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemQuantityException;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.Objects;
 
 @Getter
+@Entity
+@Table(name = "order_items")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderItem {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "order_item_id")
     private Long orderItemId;
+
+    @Column(name = "order_id", nullable = false)
     private Long orderId;
+
+    @Column(name = "item_id", nullable = false)
     private Long itemId;
+
+    @Column(name = "name", nullable = false)
     private String name;
+
+    @Column(name = "price", nullable = false)
     private Integer price;
+
+    @Column(name = "quantity", nullable = false)
     private Integer quantity;
+
+    @Column(name = "user_coupon_id")
     private Long userCouponId;
 
     @Builder(access = AccessLevel.PRIVATE)

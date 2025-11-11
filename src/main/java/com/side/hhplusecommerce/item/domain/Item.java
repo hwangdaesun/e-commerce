@@ -3,17 +3,39 @@ package com.side.hhplusecommerce.item.domain;
 import com.side.hhplusecommerce.common.BaseEntity;
 import com.side.hhplusecommerce.item.exception.InsufficientStockException;
 import com.side.hhplusecommerce.item.exception.InvalidSalesQuantityException;
+import jakarta.persistence.*;
 import java.util.Objects;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@Entity
+@Table(name = "items")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Item extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "item_id")
     private Long itemId;
+
+    @Column(name = "name", nullable = false)
     private String name;
+
+    @Column(name = "price", nullable = false)
     private Integer price;
+
+    @Column(name = "stock", nullable = false)
     private Integer stock;
+
+    @Column(name = "sales_count", nullable = false)
     private Integer salesCount;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     @Builder
     private Item(Long itemId, String name, Integer price, Integer stock, Integer salesCount) {

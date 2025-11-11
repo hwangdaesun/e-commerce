@@ -1,15 +1,13 @@
 package com.side.hhplusecommerce.cart.repository;
 
 import com.side.hhplusecommerce.cart.domain.CartItem;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface CartItemRepository {
-    CartItem save(CartItem cartItem);
+public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     List<CartItem> findByCartId(Long cartId);
     Optional<CartItem> findById(Long cartItemId);
     List<CartItem> findByIdIn(List<Long> cartItemIds);
     void deleteByCartId(Long cartId);
-    void deleteAll();
 }

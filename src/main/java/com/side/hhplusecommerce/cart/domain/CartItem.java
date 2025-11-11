@@ -2,15 +2,30 @@ package com.side.hhplusecommerce.cart.domain;
 
 import com.side.hhplusecommerce.common.BaseEntity;
 import com.side.hhplusecommerce.cart.exception.InvalidCartItemQuantityException;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@Entity
+@Table(name = "cart_items")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CartItem extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "cart_item_id")
     private Long cartItemId;
+
+    @Column(name = "cart_id", nullable = false)
     private Long cartId;
+
+    @Column(name = "item_id", nullable = false)
     private Long itemId;
+
+    @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
     @Builder(access = AccessLevel.PRIVATE)

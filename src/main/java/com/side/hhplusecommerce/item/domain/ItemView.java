@@ -1,13 +1,27 @@
 package com.side.hhplusecommerce.item.domain;
 
 import com.side.hhplusecommerce.common.BaseEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@Entity
+@Table(name = "item_views")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ItemView extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "item_view_id")
     private Long itemViewId;
+
+    @Column(name = "item_id", nullable = false)
     private Long itemId;
+
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @Builder
