@@ -30,6 +30,10 @@ public class CouponIssueLockService {
 
     @Transactional
     public IssueCouponResponse issueCouponWithPessimisticLock(Long couponId, Long userId) {
+
+        CouponStock couponStock = couponStockRepository.findByCouponIdWithPessimisticLock(couponId)
+                .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
+
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
 
@@ -39,9 +43,6 @@ public class CouponIssueLockService {
 
         List<UserCoupon> userCoupons = userCouponRepository.findByUserId(userId);
         couponIssueValidator.validateNotAlreadyIssued(couponId, userCoupons);
-
-        CouponStock couponStock = couponStockRepository.findByCouponIdWithPessimisticLock(couponId)
-                .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
 
         couponStock.decrease();
         couponStockRepository.save(couponStock);
