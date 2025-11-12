@@ -12,7 +12,10 @@ import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@Table(name = "user_coupons")
+@Table(name = "user_coupons", indexes = {
+        @Index(name = "idx_user_coupons_user_id", columnList = "user_id"),
+        @Index(name = "idx_user_coupons_coupon_id", columnList = "coupon_id")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserCoupon {
 

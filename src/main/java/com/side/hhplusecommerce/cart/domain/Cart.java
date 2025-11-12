@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "carts")
+@Table(name = "carts", indexes = {
+        @Index(name = "idx_carts_user_id", columnList = "user_id")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Cart extends BaseEntity {
 

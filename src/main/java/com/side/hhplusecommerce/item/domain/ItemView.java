@@ -9,7 +9,10 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "item_views")
+@Table(name = "item_views", indexes = {
+        @Index(name = "idx_item_views_item_id", columnList = "item_id"),
+        @Index(name = "idx_item_views_user_id", columnList = "user_id")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ItemView extends BaseEntity {
 

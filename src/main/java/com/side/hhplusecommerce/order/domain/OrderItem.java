@@ -14,7 +14,11 @@ import java.util.Objects;
 
 @Getter
 @Entity
-@Table(name = "order_items")
+@Table(name = "order_items", indexes = {
+        @Index(name = "idx_order_items_order_id", columnList = "order_id"),
+        @Index(name = "idx_order_items_item_id", columnList = "item_id"),
+        @Index(name = "idx_order_items_user_coupon_id", columnList = "user_coupon_id")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrderItem {
 
