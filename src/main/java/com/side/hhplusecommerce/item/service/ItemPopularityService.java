@@ -64,8 +64,6 @@ public class ItemPopularityService {
                 })
                 .sorted(Comparator.comparing(ItemPopularity::popularityScore).reversed())
                 .limit(limit)
-                .map(ItemWithPopularity::itemId)
-                .collect(Collectors.toList());
                 .map(itemPopularity -> itemPopularity.itemId)
                 .toList();
         // todo : 병렬 처리를 하면 어떻게 될까?
@@ -75,6 +73,18 @@ public class ItemPopularityService {
         return itemRepository.findAllByItemIdIn(popularItemIds);
     }
 
+    @Transactional(readOnly = true)
+    public List<Item> getPopularItemsV2(int limit) {
+        List<ItemPopularityStats> topStats = itemPopularityStatsRepository
+                .findTopByPopularityScore(PageRequest.of(0, limit));
+
+        List<Long> itemIds = topStats.stream()
+                .map(ItemPopularityStats::getItemId)
+                .toList();
+
+        return itemRepository.findAllByItemIdIn(itemIds).stream()
+                .sorted(Comparator.comparing(item -> itemIds.indexOf(item.getItemId())))
+                .toList();
     }
 
     private long calculatePopularity(long viewCount, long salesCount) {
