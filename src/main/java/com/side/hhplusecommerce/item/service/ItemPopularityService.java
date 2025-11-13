@@ -59,7 +59,7 @@ public class ItemPopularityService {
                 .map(itemId -> {
                     long viewCount = viewCountMap.getOrDefault(itemId, 0L);
                     long salesCount = salesCountMap.getOrDefault(itemId, 0L);
-                    long popularityScore = calculatePopularity(viewCount, salesCount);
+                    long popularityScore = viewCount * VIEW_COUNT_WEIGHT + salesCount * SALES_COUNT_WEIGHT;
                     return new ItemPopularity(itemId, popularityScore, viewCount, salesCount);
                 })
                 .sorted(Comparator.comparing(ItemPopularity::popularityScore).reversed())
@@ -76,7 +76,7 @@ public class ItemPopularityService {
     @Transactional(readOnly = true)
     public List<Item> getPopularItemsV2(int limit) {
         List<ItemPopularityStats> topStats = itemPopularityStatsRepository
-                .findTopByPopularityScore(PageRequest.of(0, limit));
+                .findTopByLatestBasedOnDate(PageRequest.of(0, limit));
 
         List<Long> itemIds = topStats.stream()
                 .map(ItemPopularityStats::getItemId)
@@ -85,10 +85,6 @@ public class ItemPopularityService {
         return itemRepository.findAllByItemIdIn(itemIds).stream()
                 .sorted(Comparator.comparing(item -> itemIds.indexOf(item.getItemId())))
                 .toList();
-    }
-
-    private long calculatePopularity(long viewCount, long salesCount) {
-        return viewCount * VIEW_COUNT_WEIGHT + salesCount * SALES_COUNT_WEIGHT;
     }
 
     private record ItemPopularity(Long itemId, Long popularityScore, Long viewCount, Long salesCount) {}
