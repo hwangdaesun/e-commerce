@@ -82,7 +82,6 @@ class OrderControllerIntegrationTest extends ContainerTest {
                 .name("Test Item 1")
                 .price(10000)
                 .stock(100)
-                .salesCount(0)
                 .version(1L)
                 .build();
 
@@ -90,7 +89,6 @@ class OrderControllerIntegrationTest extends ContainerTest {
                 .name("Test Item 2")
                 .price(20000)
                 .stock(50)
-                .salesCount(0)
                 .version(1L)
                 .build();
 
@@ -98,7 +96,6 @@ class OrderControllerIntegrationTest extends ContainerTest {
                 .name("Test Item 3")
                 .price(5000)
                 .stock(5)
-                .salesCount(0)
                 .version(1L)
                 .build();
 

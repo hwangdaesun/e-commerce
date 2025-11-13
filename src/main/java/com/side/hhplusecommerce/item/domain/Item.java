@@ -2,9 +2,7 @@ package com.side.hhplusecommerce.item.domain;
 
 import com.side.hhplusecommerce.common.BaseEntity;
 import com.side.hhplusecommerce.item.exception.InsufficientStockException;
-import com.side.hhplusecommerce.item.exception.InvalidSalesQuantityException;
 import jakarta.persistence.*;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -30,21 +28,17 @@ public class Item extends BaseEntity {
     @Column(name = "stock", nullable = false)
     private Integer stock;
 
-    @Column(name = "sales_count", nullable = false)
-    private Integer salesCount;
-
     @Version
     @Column(name = "version")
     private Long version;
 
     @Builder
-    private Item(Long itemId, String name, Integer price, Integer stock, Integer salesCount, Long version) {
+    private Item(Long itemId, String name, Integer price, Integer stock, Long version) {
         super();
         this.itemId = itemId;
         this.name = name;
         this.price = price;
         this.stock = stock;
-        this.salesCount = salesCount != null ? salesCount : 0;
         this.version = version;
     }
 
@@ -61,19 +55,5 @@ public class Item extends BaseEntity {
 
     public boolean hasEnoughQuantity(Integer quantity) {
         return this.stock >= quantity;
-    }
-
-    public void increaseSalesCount(Integer quantity) {
-        if (Objects.isNull(quantity) || quantity <= 0) {
-            throw new InvalidSalesQuantityException();
-        }
-        this.salesCount += quantity;
-    }
-
-    public void decreaseSalesCount(Integer quantity) {
-        if (Objects.isNull(quantity) || quantity <= 0) {
-            throw new InvalidSalesQuantityException();
-        }
-        this.salesCount -= quantity;
     }
 }

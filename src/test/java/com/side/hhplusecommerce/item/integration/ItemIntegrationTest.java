@@ -40,14 +40,12 @@ class ItemIntegrationTest extends ContainerTest {
                 .name("Test Item 1")
                 .price(10000)
                 .stock(100)
-                .salesCount(50)
                 .build();
 
         Item item2 = Item.builder()
                 .name("Test Item 2")
                 .price(20000)
                 .stock(50)
-                .salesCount(30)
                 .build();
 
         Item savedItem1 = itemRepository.save(item1);

@@ -38,7 +38,6 @@ class ItemStockServiceTest {
                 .name("Item 1")
                 .price(10000)
                 .stock(initialStock)
-                .salesCount(0)
                 .build();
 
         List<CartItem> cartItems = List.of(cartItem);
@@ -65,7 +64,6 @@ class ItemStockServiceTest {
                 .name("Item 1")
                 .price(10000)
                 .stock(initialStock)
-                .salesCount(salesCount)
                 .build();
 
         List<CartItem> cartItems = List.of(cartItem);

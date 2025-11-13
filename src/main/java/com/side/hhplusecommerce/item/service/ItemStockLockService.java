@@ -20,7 +20,6 @@ public class ItemStockLockService {
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
         item.decrease(quantity);
-        item.increaseSalesCount(quantity);
         itemRepository.save(item);
     }
 
@@ -30,7 +29,6 @@ public class ItemStockLockService {
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
         item.increase(quantity);
-        item.decreaseSalesCount(quantity);
         itemRepository.save(item);
     }
 }
