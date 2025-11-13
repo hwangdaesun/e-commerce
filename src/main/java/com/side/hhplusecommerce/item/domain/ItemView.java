@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "item_views", indexes = {
         @Index(name = "idx_item_views_item_id", columnList = "item_id"),
-        @Index(name = "idx_item_views_user_id", columnList = "user_id")
+        @Index(name = "idx_item_views_user_id", columnList = "user_id"),
+        @Index(name = "idx_item_views_created_at_item_id", columnList = "created_at, item_id")
 })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ItemView extends BaseEntity {
