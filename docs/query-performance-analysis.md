@@ -541,7 +541,7 @@ LIMIT 5;
 - `popularity_score` 내림차순으로 정렬
 - Pageable을 통해 LIMIT 5 적용 (상위 5개 조회)
 
-**예상 실행 계획:**
+**실행 계획:**
 
 ```json
 [
@@ -549,33 +549,75 @@ LIMIT 5;
     "id": 1,
     "select_type": "PRIMARY",
     "table": "ips",
-    "type": "ref",
-    "possible_keys": "idx_item_popularity_stats_popularity_score",
+    "partitions": null,
+    "type": "index",
+    "possible_keys": null,
     "key": "idx_item_popularity_stats_popularity_score",
-    "rows": 1000,
-    "filtered": 100,
-    "Extra": "Using where; Using filesort"
+    "key_len": "8",
+    "ref": null,
+    "rows": 5,
+    "filtered": 10,
+    "Extra": "Using where"
   },
   {
     "id": 2,
     "select_type": "SUBQUERY",
     "table": "ips2",
+    "partitions": null,
     "type": "ALL",
-    "rows": 10000,
-    "Extra": "Using temporary"
+    "possible_keys": null,
+    "key": null,
+    "key_len": null,
+    "ref": null,
+    "rows": 174582,
+    "filtered": 100,
+    "Extra": null
   }
 ]
 ```
 
 **분석:**
-- ✅ **popularity_score 인덱스 사용**: 정렬 최적화
-- ✅ **LIMIT 5**: 상위 5개만 반환
-- ⚠️ **서브쿼리**: MAX(based_on_date) 계산에 풀 스캔 발생 (개선 가능)
-- **성능: 빠름 (~10ms)** - 집계 테이블 크기가 작음
 
-**최적화 방안:**
-- `based_on_date`에 인덱스 추가하여 서브쿼리 성능 개선
-- 애플리케이션에서 최근 `based_on_date`를 캐싱하여 서브쿼리 제거
+- 풀 테이블 스캔 수행
+
+### 개선
+
+#### 복합 인덱스 (based_on_date, popularity_score DESC) 추가
+
+```json
+[
+  {
+    "id": 1,
+    "select_type": "PRIMARY",
+    "table": "ips",
+    "partitions": null,
+    "type": "index",
+    "possible_keys": "idx_based_on_date_popularity,idx_date_score",
+    "key": "idx_item_popularity_stats_popularity_score",
+    "key_len": "8",
+    "ref": null,
+    "rows": 10,
+    "filtered": 50,
+    "Extra": "Using where"
+  },
+  {
+    "id": 2,
+    "select_type": "SUBQUERY",
+    "table": null,
+    "partitions": null,
+    "type": null,
+    "possible_keys": null,
+    "key": null,
+    "key_len": null,
+    "ref": null,
+    "rows": null,
+    "filtered": null,
+    "Extra": "Select tables optimized away"
+  }
+]
+```
+
+- 서브쿼리가 완벽하게 최적화 되어 수행
 
 ---
 
