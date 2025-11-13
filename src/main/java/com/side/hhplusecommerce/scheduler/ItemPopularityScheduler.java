@@ -1,4 +1,4 @@
-package com.side.hhplusecommerce.item.scheduler;
+package com.side.hhplusecommerce.scheduler;
 import com.side.hhplusecommerce.item.dto.ItemViewCountDto;
 import com.side.hhplusecommerce.item.repository.ItemViewRepository;
 import com.side.hhplusecommerce.item.service.ItemPopularityService;
