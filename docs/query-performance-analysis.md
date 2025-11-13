@@ -1,5 +1,31 @@
 # 인기 상품 조회 쿼리 성능 개선 분석
 
+## 테스트 데이터 현황
+
+### 테이블별 레코드 수
+
+| 테이블 | 레코드 수 | 비고 |
+|--------|----------|------|
+| **user_points** | 1,000,000 | 사용자 100만 |
+| **items** | 1,000,000 | 상품 100만 |
+| **coupons** | 10,000 | 쿠폰 1만개 |
+| **coupon_stocks** | 10,000 | 쿠폰 재고 |
+| **orders** | 5,000,000 | 주문 500만 |
+| **order_items** | 14,994,473 | 주문상품 약 1,500만 |
+| **carts** | 200,000 | 장바구니 20만 |
+| **cart_items** | 600,128 | 장바구니 상품 60만 |
+| **user_coupons** | 5,000,000 | 사용자 쿠폰 500만 |
+| **item_views** | 50,000,000 | 상품 조회 5,000만 |
+
+### 주문 상태별 분포 (orders)
+
+| 상태 | 레코드 수 | 비율 |
+|------|----------|------|
+| **PAID** | 4,799,761 | 96.00% |
+| **PENDING** | 200,239 | 4.00% |
+
+---
+
 ## 1. 개요
 
 이 문서는 Item 엔티티에서 `salesCount` 칼럼을 제거하고, `ItemView`와 `OrderItem` 테이블을 활용하여 인기 상품을 조회하는 두 가지 방법의 성능을 비교 분석합니다.
@@ -578,7 +604,19 @@ LIMIT 5;
 
 **분석:**
 
-- 풀 테이블 스캔 수행
+**메인 쿼리 (id: 1, PRIMARY):**
+- ✅ **type: index** - popularity_score 인덱스를 사용한 인덱스 스캔
+- ✅ **key: idx_item_popularity_stats_popularity_score** - 정렬 최적화
+- ✅ **rows: 5** - LIMIT 5로 인해 최소한의 행만 읽음
+- ⚠️ **filtered: 10%** - WHERE 조건 (based_on_date) 적용 후 10%만 유효
+
+**서브쿼리 (id: 2, SUBQUERY):**
+- ❌ **type: ALL** - 풀 테이블 스캔
+- ❌ **rows: 174,582** - 전체 통계 데이터 스캔
+- ❌ **key: null** - based_on_date에 인덱스 없음
+- **문제점**: MAX(based_on_date)를 찾기 위해 전체 테이블 스캔 필요
+
+**성능:** ~100ms (서브쿼리 풀 스캔으로 인한 오버헤드)
 
 ### 개선
 
@@ -617,7 +655,24 @@ LIMIT 5;
 ]
 ```
 
-- 서브쿼리가 완벽하게 최적화 되어 수행
+**분석:**
+
+**메인 쿼리 (id: 1, PRIMARY):**
+- ✅ **type: index** - popularity_score 인덱스 사용 (변경 없음)
+- ✅ **rows: 10** - 이전 5개에서 10개로 증가 (약간의 오버헤드)
+- ✅ **filtered: 50%** - 10% → 50%로 개선 (복합 인덱스 효과)
+- ✅ **key: idx_item_popularity_stats_popularity_score** - 정렬 최적화
+
+**서브쿼리 (id: 2, SUBQUERY):**
+- ✅ **Extra: "Select tables optimized away"** - 서브쿼리 완전 최적화
+- ✅ **rows: null** - 실제 스캔 없음 (174,582 → 0)
+- ✅ **type: null** - 테이블 접근 불필요
+- **최적화 방법**: based_on_date 인덱스를 통해 MAX 값을 즉시 조회
+
+**성능 개선:**
+- 서브쿼리 풀 스캔 (174K rows) 완전 제거
+- "Select tables optimized away"는 MySQL이 인덱스만으로 MAX 값을 즉시 찾아 최적화한 것
+- **성능: ~5ms~10ms** (이전 ~100ms에서 10배 이상 개선)
 
 ---
 
