@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "item_popularity_stats", indexes = {
         @Index(name = "idx_item_popularity_stats_item_id", columnList = "item_id"),
-        @Index(name = "idx_item_popularity_stats_popularity_score", columnList = "popularity_score DESC")
+        @Index(name = "idx_item_popularity_stats_popularity_score", columnList = "popularity_score DESC"),
+        @Index(name = "idx_date_score", columnList = "based_on_date, popularity_score DESC")
 })
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ItemPopularityStats extends BaseEntity {
