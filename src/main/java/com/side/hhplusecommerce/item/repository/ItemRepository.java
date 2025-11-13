@@ -16,9 +16,6 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     @Query("SELECT i FROM Item i WHERE i.itemId > :cursor ORDER BY i.itemId ASC")
     List<Item> findAllWithCursor(@Param("cursor") Long cursor, Pageable pageable);
 
-    @Query("SELECT i FROM Item i WHERE i.updatedAt > :after ORDER BY i.salesCount DESC")
-    List<Item> findPopularItems(@Param("after") LocalDateTime after, Pageable pageable);
-
     @Query("SELECT i FROM Item i WHERE i.itemId IN :itemIds")
     List<Item> findAllByItemIdIn(@Param("itemIds") List<Long> itemIds);
 

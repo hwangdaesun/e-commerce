@@ -4,13 +4,18 @@ import com.side.hhplusecommerce.order.exception.InvalidOrderItemItemIdException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemOrderIdException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemPriceException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemQuantityException;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.Objects;
 
 @Getter
 @Entity
