@@ -1,16 +1,28 @@
 package com.side.hhplusecommerce.coupon.domain;
 
 import com.side.hhplusecommerce.coupon.exception.CouponSoldOutException;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Entity
+@Table(name = "coupon_stocks")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CouponStock {
+
+    @Id
+    @Column(name = "coupon_id")
     private Long couponId;
+
+    @Column(name = "remaining_quantity", nullable = false)
     private Integer remainingQuantity;
+
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @Builder(access = AccessLevel.PRIVATE)

@@ -9,6 +9,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CartItemService {
 
     private final CartItemRepository cartItemRepository;
@@ -36,6 +38,7 @@ public class CartItemService {
     }
 
     @Async
+    @Transactional
     public void deleteCartItemsAsync(Long cartId) {
         cartItemRepository.deleteByCartId(cartId);
     }

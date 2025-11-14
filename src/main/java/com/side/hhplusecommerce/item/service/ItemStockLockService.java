@@ -1,27 +1,34 @@
 package com.side.hhplusecommerce.item.service;
 
-import com.side.hhplusecommerce.common.lock.OptimisticLock;
+import com.side.hhplusecommerce.common.exception.CustomException;
+import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ItemStockLockService {
     private final ItemRepository itemRepository;
 
-    @OptimisticLock(maxRetries = 5, retryDelay = 100)
-    public void decreaseStockWithOptimisticLock(long itemId, int quantity, Item item) {
+    @Transactional
+    public void decreaseStockWithOptimisticLock(long itemId, int quantity) {
+        Item item = itemRepository.findByIdWithOptimisticLock(itemId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
         item.decrease(quantity);
-        item.increaseSalesCount(quantity);
         itemRepository.save(item);
     }
 
-    @OptimisticLock(maxRetries = 5, retryDelay = 100)
-    public void increaseStockWithOptimisticLock(long itemId, int quantity, Item item) {
+    @Transactional
+    public void increaseStockWithOptimisticLock(long itemId, int quantity) {
+        Item item = itemRepository.findByIdWithOptimisticLock(itemId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+
         item.increase(quantity);
-        item.decreaseSalesCount(quantity);
         itemRepository.save(item);
     }
 }

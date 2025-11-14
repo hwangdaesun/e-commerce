@@ -2,6 +2,25 @@ spring:
   application:
     name: hhplus-e-commerce
 
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommerce?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
+    username: ecommerce_user
+    password: ecommerce_pass
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+        show_sql: false
+    open-in-view: false
+
+decorator:
+  p6spy:
+    log-format: 'elapsed: %dms | category: %category | statement: %s'
 
 springdoc:
   api-docs:

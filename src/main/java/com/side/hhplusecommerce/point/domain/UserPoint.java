@@ -2,16 +2,28 @@ package com.side.hhplusecommerce.point.domain;
 
 import com.side.hhplusecommerce.point.exception.InsufficientPointException;
 import com.side.hhplusecommerce.point.exception.InvalidPointAmountException;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Entity
+@Table(name = "user_points")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserPoint {
+
+    @Id
+    @Column(name = "user_id")
     private Long userId;
+
+    @Column(name = "point", nullable = false)
     private Integer point;
+
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @Builder(access = AccessLevel.PRIVATE)

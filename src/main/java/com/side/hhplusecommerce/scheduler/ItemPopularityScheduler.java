@@ -1,0 +1,64 @@
+package com.side.hhplusecommerce.scheduler;
+import com.side.hhplusecommerce.item.dto.ItemViewCountDto;
+import com.side.hhplusecommerce.item.repository.ItemViewRepository;
+import com.side.hhplusecommerce.item.service.ItemPopularityService;
+import com.side.hhplusecommerce.order.dto.ItemSalesCountDto;
+import com.side.hhplusecommerce.order.repository.OrderItemRepository;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class ItemPopularityScheduler {
+
+    private final ItemViewRepository itemViewRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final ItemPopularityService itemPopularityService;
+
+    /**
+     * 매 시간마다 상품 인기도 집계 테이블 갱신
+     * - cron: 매 시간 0분에 실행
+     */
+    @Scheduled(cron = "0 0 * * * *")
+    @Transactional
+    public void updatePopularityStats() {
+        log.info("Starting popularity stats update...");
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime threeDaysAgo = now.minusDays(3);
+
+        // 조회수 집계
+        Map<Long, Long> viewCountMap = itemViewRepository.countViewsByItemIdGrouped(threeDaysAgo)
+                .stream()
+                .collect(Collectors.toMap(
+                        ItemViewCountDto::getItemId,
+                        ItemViewCountDto::getViewCount
+                ));
+
+        // 판매량 집계
+        Map<Long, Long> salesCountMap = orderItemRepository.countSalesByItemIdGrouped(threeDaysAgo)
+                .stream()
+                .collect(Collectors.toMap(
+                        ItemSalesCountDto::getItemId,
+                        ItemSalesCountDto::getSalesCount
+                ));
+
+        // 모든 itemId 수집
+        Set<Long> itemIds = new HashSet<>();
+        itemIds.addAll(viewCountMap.keySet());
+        itemIds.addAll(salesCountMap.keySet());
+
+        // bulk insert로 통계 데이터 저장
+        itemPopularityService.bulkInsertPopularityStats(viewCountMap, salesCountMap, itemIds, now);
+
+        log.info("Popularity stats update completed.");
+    }
+}

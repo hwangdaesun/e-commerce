@@ -9,13 +9,16 @@ import com.side.hhplusecommerce.coupon.repository.UserCouponRepository;
 import com.side.hhplusecommerce.coupon.service.dto.CouponUseResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CouponService {
     private final UserCouponRepository userCouponRepository;
     private final CouponRepository couponRepository;
 
+    @Transactional
     public CouponUseResult useCoupon(Long userCouponId) {
         UserCoupon userCoupon = userCouponRepository.findById(userCouponId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
@@ -29,6 +32,7 @@ public class CouponService {
         return new CouponUseResult(coupon, coupon.getDiscountAmount());
     }
 
+    @Transactional
     public void cancelCouponUse(Long userCouponId) {
         UserCoupon userCoupon = userCouponRepository.findById(userCouponId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));

@@ -8,16 +8,14 @@ import com.side.hhplusecommerce.item.controller.dto.PopularItemsResponse;
 import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.domain.ItemValidator;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
-import com.side.hhplusecommerce.item.service.ItemPopularityService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import com.side.hhplusecommerce.item.repository.ItemViewRepository;
-
+import com.side.hhplusecommerce.item.service.ItemPopularityService;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -34,9 +32,12 @@ public class ItemViewUseCase {
     }
 
     public ItemsResponse view(CursorRequest cursorRequest) {
+        Pageable pageable =
+            PageRequest.of(0, cursorRequest.getSize() + 1);
+
         List<Item> items = itemRepository.findAllWithCursor(
                 cursorRequest.getCursor(),
-                cursorRequest.getSize()
+                pageable
         );
 
         boolean hasNext = items.size() > cursorRequest.getSize();
@@ -61,15 +62,8 @@ public class ItemViewUseCase {
 
     public PopularItemsResponse viewPopular(Integer limit) {
         LocalDateTime threeDaysAgo = LocalDateTime.now().minusDays(3);
-        List<Item> items = itemRepository.findPopularItems(limit, threeDaysAgo);
-        List<Long> itemIds = items.stream()
-                .map(Item::getItemId)
-                .collect(Collectors.toList());
+        List<Item> popularItems = itemPopularityService.getPopularItemsV1(threeDaysAgo, limit);
 
-        Map<Long, Long> viewCount = itemViewRepository.countByItemIdsAndCreatedAtAfter(itemIds, threeDaysAgo);
-        List<Long> popularItemIds = itemPopularityService.getPopularItemIds(items, viewCount, limit);
-
-        List<Item> popularItems = itemRepository.findAllByIds(popularItemIds);
         return PopularItemsResponse.of(popularItems);
     }
 }

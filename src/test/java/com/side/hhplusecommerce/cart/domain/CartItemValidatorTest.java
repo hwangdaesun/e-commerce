@@ -133,7 +133,7 @@ class CartItemValidatorTest {
                 .userId(userId)
                 .build();
 
-        given(cartItemRepository.findByIdIn(cartItemIds)).willReturn(cartItems);
+        given(cartItemRepository.findByCartItemIdIn(cartItemIds)).willReturn(cartItems);
         given(cartRepository.findByUserId(userId)).willReturn(Optional.of(cart));
 
         // when
@@ -157,7 +157,7 @@ class CartItemValidatorTest {
                 CartItem.createWithId(2L, 10L, 200L, 2)
         );
 
-        given(cartItemRepository.findByIdIn(cartItemIds)).willReturn(cartItems);
+        given(cartItemRepository.findByCartItemIdIn(cartItemIds)).willReturn(cartItems);
 
         // when & then
         assertThatThrownBy(() -> cartItemValidator.validateOwnership(userId, cartItemIds))
@@ -178,7 +178,7 @@ class CartItemValidatorTest {
                 CartItem.createWithId(3L, 10L, 300L, 3)
         );
 
-        given(cartItemRepository.findByIdIn(cartItemIds)).willReturn(cartItems);
+        given(cartItemRepository.findByCartItemIdIn(cartItemIds)).willReturn(cartItems);
         given(cartRepository.findByUserId(userId)).willReturn(Optional.empty());
 
         // when & then
@@ -207,7 +207,7 @@ class CartItemValidatorTest {
                 .userId(userId)
                 .build();
 
-        given(cartItemRepository.findByIdIn(cartItemIds)).willReturn(cartItems);
+        given(cartItemRepository.findByCartItemIdIn(cartItemIds)).willReturn(cartItems);
         given(cartRepository.findByUserId(userId)).willReturn(Optional.of(cart));
 
         // when & then

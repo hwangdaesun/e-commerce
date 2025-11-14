@@ -19,7 +19,7 @@ public class ItemController implements ItemControllerDocs {
     @Override
     @GetMapping
     public ResponseEntity<ItemsResponse> getItems(
-            @RequestParam(required = false) Long cursor,
+            @RequestParam(required = false, defaultValue = "1") Long cursor,
             @RequestParam(defaultValue = "20") Integer size
     ) {
         CursorRequest cursorRequest = CursorRequest.of(cursor, size);
