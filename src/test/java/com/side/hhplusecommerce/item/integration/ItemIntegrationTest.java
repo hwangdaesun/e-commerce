@@ -1,8 +1,11 @@
 package com.side.hhplusecommerce.item.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.side.hhplusecommerce.ContainerTest;
 import com.side.hhplusecommerce.item.domain.Item;
+import com.side.hhplusecommerce.item.domain.ItemView;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
+import com.side.hhplusecommerce.item.repository.ItemViewRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class ItemIntegrationTest {
+class ItemIntegrationTest extends ContainerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -27,30 +30,46 @@ class ItemIntegrationTest {
     @Autowired
     private ItemRepository itemRepository;
 
+    @Autowired
+    private ItemViewRepository itemViewRepository;
+
     @BeforeEach
     void setUp() {
-        // 모든 데이터 정리 (테스트 격리)
-        itemRepository.deleteAll();
-
         // 테스트 데이터 준비
         Item item1 = Item.builder()
-                .itemId(1L)
                 .name("Test Item 1")
                 .price(10000)
                 .stock(100)
-                .salesCount(50)
                 .build();
 
         Item item2 = Item.builder()
-                .itemId(2L)
                 .name("Test Item 2")
                 .price(20000)
                 .stock(50)
-                .salesCount(30)
                 .build();
 
-        itemRepository.save(item1);
-        itemRepository.save(item2);
+        Item savedItem1 = itemRepository.save(item1);
+        Item savedItem2 = itemRepository.save(item2);
+
+        // ItemView 데이터 추가
+        ItemView itemView1 = ItemView.builder()
+                .itemId(savedItem1.getItemId())
+                .userId(1L)
+                .build();
+
+        ItemView itemView2 = ItemView.builder()
+                .itemId(savedItem1.getItemId())
+                .userId(2L)
+                .build();
+
+        ItemView itemView3 = ItemView.builder()
+                .itemId(savedItem2.getItemId())
+                .userId(1L)
+                .build();
+
+        itemViewRepository.save(itemView1);
+        itemViewRepository.save(itemView2);
+        itemViewRepository.save(itemView3);
     }
 
     @Test
@@ -77,9 +96,10 @@ class ItemIntegrationTest {
     @Test
     @DisplayName("[성공] 상품 상세 조회")
     void getItem_success() throws Exception {
-        mockMvc.perform(get("/api/items/{itemId}", 1L))
+        Item item = itemRepository.findAll().get(0);
+        mockMvc.perform(get("/api/items/{itemId}", item.getItemId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.itemId").value(1))
+                .andExpect(jsonPath("$.itemId").value(item.getItemId()))
                 .andExpect(jsonPath("$.name").value("Test Item 1"))
                 .andExpect(jsonPath("$.price").value(10000))
                 .andExpect(jsonPath("$.stock").value(100));

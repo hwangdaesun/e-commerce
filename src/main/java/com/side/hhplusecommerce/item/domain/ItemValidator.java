@@ -19,7 +19,7 @@ public class ItemValidator {
     }
 
     public List<Item> validateExistence(List<Long> itemIds) {
-        List<Item> items = itemRepository.findAllByIds(itemIds);
+        List<Item> items = itemRepository.findAllByItemIdIn(itemIds);
 
         if (items.size() != itemIds.size()) {
             throw new CustomException(ErrorCode.ITEM_NOT_FOUND);

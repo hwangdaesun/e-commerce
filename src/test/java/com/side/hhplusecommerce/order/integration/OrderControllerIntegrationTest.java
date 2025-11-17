@@ -1,6 +1,7 @@
 package com.side.hhplusecommerce.order.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.side.hhplusecommerce.ContainerTest;
 import com.side.hhplusecommerce.cart.domain.Cart;
 import com.side.hhplusecommerce.cart.domain.CartItem;
 import com.side.hhplusecommerce.cart.repository.CartItemRepository;
@@ -33,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class OrderControllerIntegrationTest {
+class OrderControllerIntegrationTest extends ContainerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -62,56 +63,60 @@ class OrderControllerIntegrationTest {
     @Autowired
     private UserPointRepository userPointRepository;
 
+    private Long userWithSufficientPointsId;     // 포인트가 충분한 사용자 ID
+    private Long userWithInsufficientPointsId;   // 포인트가 부족한 사용자 ID
+    private Long validCouponId;                   // 유효한 쿠폰 ID
+    private Long expiredCouponId;                 // 만료된 쿠폰 ID
+    private Long normalItem1Id;                   // 재고 충분한 상품1 ID
+    private Long normalItem2Id;                   // 재고 충분한 상품2 ID
+    private Long lowStockItemId;                  // 재고 부족한 상품 ID
+    private Long testCartId;                      // 테스트용 장바구니 ID
+
     @BeforeEach
     void setUp() {
-        // 모든 데이터 정리 (테스트 격리)
-        cartItemRepository.deleteAll();
-        cartRepository.deleteAll();
-        userCouponRepository.deleteAll();
-        couponStockRepository.deleteAll();
-        couponRepository.deleteAll();
-        userPointRepository.deleteAll();
-        itemRepository.deleteAll();
+        userWithSufficientPointsId = 100L;
+        userWithInsufficientPointsId = 200L;
 
         // 상품 데이터
         Item item1 = Item.builder()
-                .itemId(1L)
                 .name("Test Item 1")
                 .price(10000)
                 .stock(100)
-                .salesCount(0)
+                .version(1L)
                 .build();
 
         Item item2 = Item.builder()
-                .itemId(2L)
                 .name("Test Item 2")
                 .price(20000)
                 .stock(50)
-                .salesCount(0)
+                .version(1L)
                 .build();
 
         Item item3 = Item.builder()
-                .itemId(3L)
                 .name("Test Item 3")
                 .price(5000)
                 .stock(5)
-                .salesCount(0)
+                .version(1L)
                 .build();
 
-        itemRepository.save(item1);
-        itemRepository.save(item2);
-        itemRepository.save(item3);
+        Item savedItem1 = itemRepository.save(item1);
+        Item savedItem2 = itemRepository.save(item2);
+        Item savedItem3 = itemRepository.save(item3);
+
+        normalItem1Id = savedItem1.getItemId();
+        normalItem2Id = savedItem2.getItemId();
+        lowStockItemId = savedItem3.getItemId();
 
         // 장바구니 데이터
         Cart cart1 = Cart.builder()
-                .cartId(1L)
-                .userId(100L)
+                .userId(userWithSufficientPointsId)
                 .build();
-        cartRepository.save(cart1);
+        Cart savedCart = cartRepository.save(cart1);
+        testCartId = savedCart.getCartId();
 
-        CartItem cartItem1 = CartItem.create(cart1.getCartId(), 1L, 2);
-        CartItem cartItem2 = CartItem.create(cart1.getCartId(), 2L, 1);
-        CartItem cartItem3 = CartItem.create(cart1.getCartId(), 3L, 10); // 재고 부족할 항목
+        CartItem cartItem1 = CartItem.create(testCartId, normalItem1Id, 2);
+        CartItem cartItem2 = CartItem.create(testCartId, normalItem2Id, 1);
+        CartItem cartItem3 = CartItem.create(testCartId, lowStockItemId, 10); // 재고 부족할 항목
 
         cartItemRepository.save(cartItem1);
         cartItemRepository.save(cartItem2);
@@ -119,7 +124,6 @@ class OrderControllerIntegrationTest {
 
         // 쿠폰 데이터
         Coupon coupon = Coupon.builder()
-                .couponId(1L)
                 .name("5000원 할인")
                 .discountAmount(5000)
                 .totalQuantity(100)
@@ -127,32 +131,34 @@ class OrderControllerIntegrationTest {
                 .build();
 
         Coupon expiredCoupon = Coupon.builder()
-                .couponId(2L)
                 .name("만료된 쿠폰")
                 .discountAmount(5000)
                 .totalQuantity(100)
                 .expiresAt(LocalDateTime.now().minusDays(1))
                 .build();
 
-        couponRepository.save(coupon);
-        couponRepository.save(expiredCoupon);
+        Coupon savedCoupon = couponRepository.save(coupon);
+        Coupon savedExpiredCoupon = couponRepository.save(expiredCoupon);
 
-        CouponStock couponStock1 = CouponStock.of(1L, 10);
-        CouponStock couponStock2 = CouponStock.of(2L, 10);
+        validCouponId = savedCoupon.getCouponId();
+        expiredCouponId = savedExpiredCoupon.getCouponId();
+
+        CouponStock couponStock1 = CouponStock.of(validCouponId, 10);
+        CouponStock couponStock2 = CouponStock.of(expiredCouponId, 10);
         couponStockRepository.save(couponStock1);
         couponStockRepository.save(couponStock2);
 
-        UserCoupon userCoupon1 = UserCoupon.issue(100L, 1L);
-        UserCoupon userCoupon2 = UserCoupon.issue(100L, 2L);
+        UserCoupon userCoupon1 = UserCoupon.issue(userWithSufficientPointsId, validCouponId);
+        UserCoupon userCoupon2 = UserCoupon.issue(userWithSufficientPointsId, expiredCouponId);
         userCouponRepository.save(userCoupon1);
         userCouponRepository.save(userCoupon2);
 
         // 포인트 데이터
-        UserPoint userPoint1 = UserPoint.initialize(100L);
+        UserPoint userPoint1 = UserPoint.initialize(userWithSufficientPointsId);
         userPoint1.charge(100000);
         userPointRepository.save(userPoint1);
 
-        UserPoint userPoint2 = UserPoint.initialize(200L);
+        UserPoint userPoint2 = UserPoint.initialize(userWithInsufficientPointsId);
         userPoint2.charge(1000); // 포인트 부족
         userPointRepository.save(userPoint2);
     }
@@ -160,12 +166,12 @@ class OrderControllerIntegrationTest {
     @Test
     @DisplayName("[성공] 주문 생성 - 쿠폰 없이")
     void createOrder_success_withoutCoupon() throws Exception {
-        List<Long> cartItemIds = cartItemRepository.findByCartId(1L).stream()
-                .filter(ci -> ci.getItemId() == 1L || ci.getItemId() == 2L)
+        List<Long> cartItemIds = cartItemRepository.findByCartId(testCartId).stream()
+                .filter(ci -> ci.getItemId().equals(normalItem1Id) || ci.getItemId().equals(normalItem2Id))
                 .map(CartItem::getCartItemId)
                 .toList();
 
-        CreateOrderRequest request = new CreateOrderRequest(100L, cartItemIds, null);
+        CreateOrderRequest request = new CreateOrderRequest(userWithSufficientPointsId, cartItemIds, null);
 
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -176,17 +182,17 @@ class OrderControllerIntegrationTest {
     @Test
     @DisplayName("[성공] 주문 생성 - 쿠폰 사용")
     void createOrder_success_withCoupon() throws Exception {
-        List<Long> cartItemIds = cartItemRepository.findByCartId(1L).stream()
-                .filter(ci -> ci.getItemId() == 1L || ci.getItemId() == 2L)
+        List<Long> cartItemIds = cartItemRepository.findByCartId(testCartId).stream()
+                .filter(ci -> ci.getItemId().equals(normalItem1Id) || ci.getItemId().equals(normalItem2Id))
                 .map(CartItem::getCartItemId)
                 .toList();
 
-        UserCoupon userCoupon = userCouponRepository.findByUserId(100L).stream()
-                .filter(uc -> uc.getCouponId() == 1L)
+        UserCoupon userCoupon = userCouponRepository.findByUserId(userWithSufficientPointsId).stream()
+                .filter(uc -> uc.getCouponId().equals(validCouponId))
                 .findFirst()
                 .orElseThrow();
 
-        CreateOrderRequest request = new CreateOrderRequest(100L, cartItemIds, userCoupon.getUserCouponId());
+        CreateOrderRequest request = new CreateOrderRequest(userWithSufficientPointsId, cartItemIds, userCoupon.getUserCouponId());
 
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -197,12 +203,12 @@ class OrderControllerIntegrationTest {
     @Test
     @DisplayName("[실패] 주문 생성 - 재고 부족")
     void createOrder_fail_insufficientStock() throws Exception {
-        List<Long> cartItemIds = cartItemRepository.findByCartId(1L).stream()
-                .filter(ci -> ci.getItemId() == 3L)
+        List<Long> cartItemIds = cartItemRepository.findByCartId(testCartId).stream()
+                .filter(ci -> ci.getItemId().equals(lowStockItemId))
                 .map(CartItem::getCartItemId)
                 .toList();
 
-        CreateOrderRequest request = new CreateOrderRequest(100L, cartItemIds, null);
+        CreateOrderRequest request = new CreateOrderRequest(userWithSufficientPointsId, cartItemIds, null);
 
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -213,17 +219,17 @@ class OrderControllerIntegrationTest {
     @Test
     @DisplayName("[실패] 주문 생성 - 만료된 쿠폰 사용")
     void createOrder_fail_expiredCoupon() throws Exception {
-        List<Long> cartItemIds = cartItemRepository.findByCartId(1L).stream()
-                .filter(ci -> ci.getItemId() == 1L || ci.getItemId() == 2L)
+        List<Long> cartItemIds = cartItemRepository.findByCartId(testCartId).stream()
+                .filter(ci -> ci.getItemId().equals(normalItem1Id) || ci.getItemId().equals(normalItem2Id))
                 .map(CartItem::getCartItemId)
                 .toList();
 
-        UserCoupon expiredUserCoupon = userCouponRepository.findByUserId(100L).stream()
-                .filter(uc -> uc.getCouponId() == 2L)
+        UserCoupon expiredUserCoupon = userCouponRepository.findByUserId(userWithSufficientPointsId).stream()
+                .filter(uc -> uc.getCouponId().equals(expiredCouponId))
                 .findFirst()
                 .orElseThrow();
 
-        CreateOrderRequest request = new CreateOrderRequest(100L, cartItemIds, expiredUserCoupon.getUserCouponId());
+        CreateOrderRequest request = new CreateOrderRequest(userWithSufficientPointsId, cartItemIds, expiredUserCoupon.getUserCouponId());
 
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -234,7 +240,7 @@ class OrderControllerIntegrationTest {
     @Test
     @DisplayName("[실패] 주문 생성 - 장바구니 항목 없음")
     void createOrder_fail_emptyCartItems() throws Exception {
-        CreateOrderRequest request = new CreateOrderRequest(100L, List.of(), null);
+        CreateOrderRequest request = new CreateOrderRequest(userWithSufficientPointsId, List.of(), null);
 
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)

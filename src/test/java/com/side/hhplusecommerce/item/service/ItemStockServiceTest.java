@@ -38,7 +38,6 @@ class ItemStockServiceTest {
                 .name("Item 1")
                 .price(10000)
                 .stock(initialStock)
-                .salesCount(0)
                 .build();
 
         List<CartItem> cartItems = List.of(cartItem);
@@ -48,7 +47,7 @@ class ItemStockServiceTest {
         itemStockService.decreaseStock(cartItems, items);
 
         // then
-        verify(itemStockLockService).decreaseStockWithOptimisticLock(1L, orderQuantity, item);
+        verify(itemStockLockService).decreaseStockWithOptimisticLock(1L, orderQuantity);
     }
 
     @Test
@@ -65,21 +64,20 @@ class ItemStockServiceTest {
                 .name("Item 1")
                 .price(10000)
                 .stock(initialStock)
-                .salesCount(salesCount)
                 .build();
 
         List<CartItem> cartItems = List.of(cartItem);
         List<Item> items = List.of(item);
 
         doThrow(new CustomException(ErrorCode.INSUFFICIENT_STOCK))
-                .when(itemStockLockService).decreaseStockWithOptimisticLock(1L, orderQuantity, item);
+                .when(itemStockLockService).decreaseStockWithOptimisticLock(1L, orderQuantity);
 
         // when & then
         assertThatThrownBy(() -> itemStockService.decreaseStock(cartItems, items))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.INSUFFICIENT_STOCK.getMessage());
 
-        verify(itemStockLockService).decreaseStockWithOptimisticLock(1L, orderQuantity, item);
+        verify(itemStockLockService).decreaseStockWithOptimisticLock(1L, orderQuantity);
     }
 
 }

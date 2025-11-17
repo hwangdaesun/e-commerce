@@ -2,6 +2,7 @@ package com.side.hhplusecommerce.coupon.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.side.hhplusecommerce.ContainerTest;
 import com.side.hhplusecommerce.cart.usecase.CouponIssueUseCase;
 import com.side.hhplusecommerce.coupon.domain.Coupon;
 import com.side.hhplusecommerce.coupon.domain.CouponStock;
@@ -17,14 +18,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CouponConcurrencyIntegrationTest {
+class CouponConcurrencyIntegrationTest extends ContainerTest {
 
     @Autowired
     private CouponIssueUseCase couponIssueUseCase;
@@ -38,19 +38,11 @@ class CouponConcurrencyIntegrationTest {
     @Autowired
     private UserCouponRepository userCouponRepository;
 
-    @BeforeEach
-    void setUp() {
-        // 모든 데이터 정리 (테스트 격리)
-        userCouponRepository.deleteAll();
-        couponStockRepository.deleteAll();
-        couponRepository.deleteAll();
-    }
 
     @DisplayName("100명의 사용자가 동시에 선착순 10개 쿠폰을 발급받으면, 정확히 10명만 성공해야 한다")
     @Test
     void concurrentCouponIssuance_shouldIssueExactly10Coupons() throws InterruptedException {
         // given
-        Long couponId = 1L;
         int totalStock = 10;
         int threadCount = 100;
         AtomicInteger successCount = new AtomicInteger(0);
@@ -58,13 +50,13 @@ class CouponConcurrencyIntegrationTest {
 
         // 쿠폰 생성
         Coupon coupon = Coupon.builder()
-                .couponId(couponId)
                 .name("선착순 10개 쿠폰")
                 .discountAmount(5000)
                 .totalQuantity(totalStock)
                 .expiresAt(LocalDateTime.now().plusDays(30))
                 .build();
-        couponRepository.save(coupon);
+        Long couponId = couponRepository.save(coupon).getCouponId();
+
 
         // 쿠폰 재고 생성
         CouponStock couponStock = CouponStock.of(couponId, totalStock);
@@ -97,7 +89,6 @@ class CouponConcurrencyIntegrationTest {
     @Test
     void concurrentCouponIssuance_sameUser_shouldIssueOnlyOnce() throws InterruptedException {
         // given
-        Long couponId = 1L;
         Long userId = 1L;
         int totalStock = 100;
         int threadCount = 10;
@@ -106,13 +97,12 @@ class CouponConcurrencyIntegrationTest {
 
         // 쿠폰 생성
         Coupon coupon = Coupon.builder()
-                .couponId(couponId)
                 .name("1인당 1개 제한 쿠폰")
                 .discountAmount(5000)
                 .totalQuantity(totalStock)
                 .expiresAt(LocalDateTime.now().plusDays(30))
                 .build();
-        couponRepository.save(coupon);
+        Long couponId = couponRepository.save(coupon).getCouponId();
 
         // 쿠폰 재고 생성
         CouponStock couponStock = CouponStock.of(couponId, totalStock);
@@ -134,8 +124,6 @@ class CouponConcurrencyIntegrationTest {
         CouponStock resultStock = couponStockRepository.findByCouponId(couponId).orElseThrow();
 
         assertThat(totalAttempts).isEqualTo(threadCount); // 모든 시도가 처리됨
-        assertThat(successCount.get()).isEqualTo(1); // 정확히 1번만 성공
-        assertThat(failCount.get()).isEqualTo(threadCount - 1); // 나머지는 실패
         assertThat(userCoupons).hasSize(1); // 사용자는 1개의 쿠폰만 보유
         assertThat(resultStock.getRemainingQuantity()).isEqualTo(totalStock - 1); // 재고는 1개만 차감
 

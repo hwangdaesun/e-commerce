@@ -28,7 +28,7 @@ public class CartItemValidator {
     }
 
     public List<CartItem> validateOwnership(Long userId, List<Long> cartItemIds) {
-        List<CartItem> cartItems = cartItemRepository.findByIdIn(cartItemIds);
+        List<CartItem> cartItems = cartItemRepository.findByCartItemIdIn(cartItemIds);
 
         if (cartItems.size() != cartItemIds.size()) {
             throw new CustomException(ErrorCode.CART_ITEM_NOT_FOUND);
