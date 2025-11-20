@@ -45,12 +45,12 @@ class OrderConcurrencyIntegrationTest extends ContainerTest {
     @Autowired
     private UserPointRepository userPointRepository;
 
-    @DisplayName("특정 상품의 재고가 9개인데 동시에 10명이 주문을 시도하면, 재고가 0개가 되고, 주문은 9명 성공하고, 나머지는 실패한다")
+    @DisplayName("특정 상품의 재고가 9개인데 동시에 20명이 주문을 시도하면, 재고가 0개가 되고, 주문은 9명 성공하고, 나머지는 실패한다")
     @Test
     void concurrentOrderCreation_shouldSucceedExactly9Orders() throws InterruptedException {
         // given
         int initialStock = 9;
-        int threadCount = 10;
+        int threadCount = 20;
         int orderQuantity = 1;
         AtomicInteger successCount = new AtomicInteger(0);
         AtomicInteger failCount = new AtomicInteger(0);
