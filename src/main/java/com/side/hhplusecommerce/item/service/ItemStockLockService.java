@@ -16,7 +16,7 @@ public class ItemStockLockService {
 
     @Transactional
     public void decreaseStockWithOptimisticLock(long itemId, int quantity) {
-        Item item = itemRepository.findByIdWithOptimisticLock(itemId)
+        Item item = itemRepository.findByIdWithPessimisticLock(itemId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
         item.decrease(quantity);
@@ -25,7 +25,7 @@ public class ItemStockLockService {
 
     @Transactional
     public void increaseStockWithOptimisticLock(long itemId, int quantity) {
-        Item item = itemRepository.findByIdWithOptimisticLock(itemId)
+        Item item = itemRepository.findByIdWithPessimisticLock(itemId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
         item.increase(quantity);
