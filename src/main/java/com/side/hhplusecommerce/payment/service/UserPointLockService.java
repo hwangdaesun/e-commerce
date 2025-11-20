@@ -6,6 +6,7 @@ import com.side.hhplusecommerce.point.domain.UserPoint;
 import com.side.hhplusecommerce.point.repository.UserPointRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
