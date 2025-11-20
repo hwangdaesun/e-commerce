@@ -6,16 +6,13 @@ import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class ItemStockLockService {
     private final ItemRepository itemRepository;
 
-    @Transactional
-    public void decreaseStockWithOptimisticLock(long itemId, int quantity) {
+    public void decreaseStockWithPessimisticLock(long itemId, int quantity) {
         Item item = itemRepository.findByIdWithPessimisticLock(itemId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
@@ -23,8 +20,7 @@ public class ItemStockLockService {
         itemRepository.save(item);
     }
 
-    @Transactional
-    public void increaseStockWithOptimisticLock(long itemId, int quantity) {
+    public void increaseStockWithWithPessimisticLock(long itemId, int quantity) {
         Item item = itemRepository.findByIdWithPessimisticLock(itemId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
 
