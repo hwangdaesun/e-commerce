@@ -4,9 +4,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.side.hhplusecommerce.cart.domain.CartItem;
@@ -18,13 +15,8 @@ import com.side.hhplusecommerce.coupon.service.dto.CouponUseResult;
 import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.domain.ItemValidator;
 import com.side.hhplusecommerce.item.exception.InsufficientStockException;
-import com.side.hhplusecommerce.item.service.ItemStockService;
-import com.side.hhplusecommerce.cart.repository.CartRepository;
-import com.side.hhplusecommerce.order.domain.Order;
 import com.side.hhplusecommerce.order.service.ExternalDataPlatformService;
-import com.side.hhplusecommerce.order.service.OrderPaymentService;
-import com.side.hhplusecommerce.order.service.OrderService;
-import com.side.hhplusecommerce.order.service.dto.OrderCreateResult;
+import com.side.hhplusecommerce.order.service.OrderTransactionService;
 import com.side.hhplusecommerce.point.exception.InsufficientPointException;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,22 +40,13 @@ class OrderCreateUseCaseTest {
     private ItemValidator itemValidator;
 
     @Mock
-    private ItemStockService itemStockService;
-
-    @Mock
     private CouponService couponService;
 
     @Mock
-    private OrderService orderService;
-
-    @Mock
-    private OrderPaymentService orderPaymentService;
-
-    @Mock
-    private CartRepository cartRepository;
-
-    @Mock
     private ExternalDataPlatformService externalDataPlatformService;
+
+    @Mock
+    private OrderTransactionService orderTransactionService;
 
     @InjectMocks
     private OrderCreateUseCase orderCreateUseCase;
@@ -114,7 +97,9 @@ class OrderCreateUseCaseTest {
         when(cartItemValidator.validateOwnership(userId, cartItemIds)).thenReturn(validCartItems);
         when(itemValidator.validateExistence(anyList())).thenReturn(items);
         when(couponService.useCoupon(userCouponId)).thenReturn(couponUseResult);
-        doThrow(new InsufficientStockException()).when(itemStockService).decreaseStock(validCartItems, items);
+        when(cartItemService.calculateTotalAmount(validCartItems, items)).thenReturn(30000);
+        when(orderTransactionService.executeCoreOrderTransaction(anyLong(), anyList(), anyList(), any(), any(), anyLong()))
+                .thenThrow(new InsufficientStockException());
 
         // when & then
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, userCouponId))
@@ -127,7 +112,9 @@ class OrderCreateUseCaseTest {
         // given - userCouponId를 null로 설정
         when(cartItemValidator.validateOwnership(userId, cartItemIds)).thenReturn(validCartItems);
         when(itemValidator.validateExistence(anyList())).thenReturn(items);
-        doThrow(new InsufficientStockException()).when(itemStockService).decreaseStock(validCartItems, items);
+        when(cartItemService.calculateTotalAmount(validCartItems, items)).thenReturn(30000);
+        when(orderTransactionService.executeCoreOrderTransaction(anyLong(), anyList(), anyList(), any(), any(), any()))
+                .thenThrow(new InsufficientStockException());
 
         // when & then
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, null))
@@ -142,7 +129,7 @@ class OrderCreateUseCaseTest {
         when(itemValidator.validateExistence(anyList())).thenReturn(items);
         when(couponService.useCoupon(userCouponId)).thenReturn(couponUseResult);
         when(cartItemService.calculateTotalAmount(validCartItems, items)).thenReturn(30000);
-        when(orderService.createOrder(anyLong(), anyList(), anyList(), any(), any(), any()))
+        when(orderTransactionService.executeCoreOrderTransaction(anyLong(), anyList(), anyList(), any(), any(), anyLong()))
                 .thenThrow(new RuntimeException("주문 생성 실패"));
 
         // when & then
@@ -158,7 +145,7 @@ class OrderCreateUseCaseTest {
         when(cartItemValidator.validateOwnership(userId, cartItemIds)).thenReturn(validCartItems);
         when(itemValidator.validateExistence(anyList())).thenReturn(items);
         when(cartItemService.calculateTotalAmount(validCartItems, items)).thenReturn(30000);
-        when(orderService.createOrder(anyLong(), anyList(), anyList(), any(), any(), any()))
+        when(orderTransactionService.executeCoreOrderTransaction(anyLong(), anyList(), anyList(), any(), any(), any()))
                 .thenThrow(new RuntimeException("주문 생성 실패"));
 
         // when & then
@@ -171,17 +158,12 @@ class OrderCreateUseCaseTest {
     @DisplayName("결제 실패 시 예외가 발생한다")
     void rollbackCouponAndStockOnPaymentFail() {
         // given
-        Order mockOrder = mock(Order.class);
-        OrderCreateResult orderCreateResult = new OrderCreateResult(mockOrder, List.of());
-
         when(cartItemValidator.validateOwnership(userId, cartItemIds)).thenReturn(validCartItems);
         when(itemValidator.validateExistence(anyList())).thenReturn(items);
         when(couponService.useCoupon(userCouponId)).thenReturn(couponUseResult);
         when(cartItemService.calculateTotalAmount(validCartItems, items)).thenReturn(30000);
-        when(orderService.createOrder(anyLong(), anyList(), anyList(), any(), any(), any()))
-                .thenReturn(orderCreateResult);
-        doThrow(new InsufficientPointException()).when(orderPaymentService)
-                .processOrderPayment(eq(userId), any());
+        when(orderTransactionService.executeCoreOrderTransaction(anyLong(), anyList(), anyList(), any(), any(), anyLong()))
+                .thenThrow(new InsufficientPointException());
 
         // when & then
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, userCouponId))
@@ -192,16 +174,11 @@ class OrderCreateUseCaseTest {
     @DisplayName("결제 실패 시 쿠폰을 사용하지 않아도 예외가 발생한다")
     void rollbackStockOnPaymentFailWithoutCoupon() {
         // given
-        Order mockOrder = mock(Order.class);
-        OrderCreateResult orderCreateResult = new OrderCreateResult(mockOrder, List.of());
-
         when(cartItemValidator.validateOwnership(userId, cartItemIds)).thenReturn(validCartItems);
         when(itemValidator.validateExistence(anyList())).thenReturn(items);
         when(cartItemService.calculateTotalAmount(validCartItems, items)).thenReturn(30000);
-        when(orderService.createOrder(anyLong(), anyList(), anyList(), any(), any(), any()))
-                .thenReturn(orderCreateResult);
-        doThrow(new InsufficientPointException()).when(orderPaymentService)
-                .processOrderPayment(eq(userId), any());
+        when(orderTransactionService.executeCoreOrderTransaction(anyLong(), anyList(), anyList(), any(), any(), any()))
+                .thenThrow(new InsufficientPointException());
 
         // when & then
         assertThatThrownBy(() -> orderCreateUseCase.create(userId, cartItemIds, null))

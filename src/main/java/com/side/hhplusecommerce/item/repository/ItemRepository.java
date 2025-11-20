@@ -22,4 +22,8 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     @Lock(LockModeType.OPTIMISTIC)
     @Query("SELECT i FROM Item i WHERE i.itemId = :itemId")
     Optional<Item> findByIdWithOptimisticLock(@Param("itemId") Long itemId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT i FROM Item i WHERE i.itemId = :itemId")
+    Optional<Item> findByIdWithPessimisticLock(@Param("itemId") Long itemId);
 }

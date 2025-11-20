@@ -2,6 +2,14 @@ spring:
   application:
     name: hhplus-e-commerce-test
 
+  datasource:
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
   jpa:
     hibernate:
       ddl-auto: create-drop
