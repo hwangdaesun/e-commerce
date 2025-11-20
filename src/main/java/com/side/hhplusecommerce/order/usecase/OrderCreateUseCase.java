@@ -18,6 +18,7 @@ import com.side.hhplusecommerce.order.service.ExternalDataPlatformService;
 import com.side.hhplusecommerce.order.service.OrderPaymentService;
 import com.side.hhplusecommerce.order.service.OrderService;
 import com.side.hhplusecommerce.order.service.dto.OrderCreateResult;
+import com.side.hhplusecommerce.payment.service.UserPointService;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class OrderCreateUseCase {
     private final OrderPaymentService orderPaymentService;
     private final CartRepository cartRepository;
     private final ExternalDataPlatformService externalDataPlatformService;
+    private final UserPointService userPointService;
 
     @Transactional
     public CreateOrderResponse create(Long userId, List<Long> cartItemIds, Long userCouponId) {
@@ -55,20 +57,35 @@ public class OrderCreateUseCase {
             couponDiscount = couponUseResult.getDiscountAmount();
         }
 
-        // 재고 확인 및 차감
-        itemStockService.decreaseStock(validCartItems, items);
-
         Integer totalAmount = cartItemService.calculateTotalAmount(validCartItems, items);
 
-        // 주문 생성
+        // 1. 주문 생성 (부모 트랜잭션)
         OrderCreateResult orderCreateResult = orderService.createOrder(
                 userId, validCartItems, items, totalAmount, couponDiscount, userCouponId);
 
         Order savedOrder = orderCreateResult.getOrder();
         List<OrderItem> savedOrderItems = orderCreateResult.getOrderItems();
 
-        // 결제 처리
-        orderPaymentService.processOrderPayment(userId, savedOrder);
+        // 2. 재고 확인 및 차감 (자식 트랜잭션 REQUIRES_NEW + 비관적 락)
+        try {
+            itemStockService.decreaseStock(validCartItems, items);
+        } catch (Exception e) {
+            // 재고 차감 실패 시: 주문(1)과 재고(2) 모두 롤백
+            throw e;
+        }
+
+        // 3. 포인트 사용 (자식 트랜잭션 REQUIRES_NEW + 비관적 락)
+        try {
+            userPointService.use(userId, savedOrder.getFinalAmount());
+        } catch (Exception e) {
+            // 포인트 사용 실패 시: 주문(1)과 포인트(3)만 롤백, 재고(2)는 이미 커밋됨
+            // 보상 트랜잭션으로 재고 복구
+            itemStockService.increaseStock(validCartItems, items);
+            throw e;
+        }
+
+        // 4. 주문 상태를 결제 완료로 변경 (부모 트랜잭션)
+        orderService.completeOrderPayment(savedOrder);
 
         // 비동기로 장바구니 삭제 (주문 완료 후)
         Cart cart = cartRepository.findByUserId(userId).orElse(null);
