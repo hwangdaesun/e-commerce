@@ -52,4 +52,10 @@ public class OrderService {
 
         return new OrderCreateResult(savedOrder, savedOrderItems);
     }
+
+    @Transactional
+    public void completeOrderPayment(Order order) {
+        order.completePay();
+        orderRepository.save(order);
+    }
 }
