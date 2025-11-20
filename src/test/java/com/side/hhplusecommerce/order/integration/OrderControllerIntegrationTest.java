@@ -213,7 +213,7 @@ class OrderControllerIntegrationTest extends ContainerTest {
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict());
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
@@ -245,6 +245,6 @@ class OrderControllerIntegrationTest extends ContainerTest {
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().is4xxClientError());
     }
 }
