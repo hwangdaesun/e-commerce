@@ -113,4 +113,44 @@ public class CreateOrderResponse {
                 order.getCreatedAt()
         );
     }
+
+    public static CreateOrderResponse of(
+            com.side.hhplusecommerce.order.service.dto.OrderCreateResult orderCreateResult,
+            com.side.hhplusecommerce.coupon.domain.Coupon coupon
+    ) {
+        List<OrderItem> items = orderCreateResult.getOrderItems().stream()
+                .map(orderItem -> new OrderItem(
+                        orderItem.getOrderItemId(),
+                        orderItem.getItemId(),
+                        orderItem.getName(),
+                        orderItem.getPrice(),
+                        orderItem.getQuantity(),
+                        orderItem.getPrice() * orderItem.getQuantity()
+                ))
+                .toList();
+
+        CouponUsed couponUsed = null;
+        if (Objects.nonNull(coupon)) {
+            couponUsed = new CouponUsed(
+                    orderCreateResult.getOrderItems().stream()
+                            .filter(orderItem -> Objects.nonNull(orderItem.getUserCouponId()))
+                            .findFirst()
+                            .map(com.side.hhplusecommerce.order.service.dto.OrderCreateResult.OrderItemDto::getUserCouponId)
+                            .orElse(null),
+                    coupon.getName(),
+                    coupon.getDiscountAmount()
+            );
+        }
+
+        return new CreateOrderResponse(
+                orderCreateResult.getOrderId(),
+                items,
+                orderCreateResult.getTotalAmount(),
+                orderCreateResult.getCouponDiscount(),
+                orderCreateResult.getFinalAmount(),
+                orderCreateResult.getFinalAmount(),
+                couponUsed,
+                orderCreateResult.getCreatedAt()
+        );
+    }
 }
