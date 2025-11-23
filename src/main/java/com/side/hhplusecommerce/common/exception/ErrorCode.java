@@ -2,6 +2,7 @@ package com.side.hhplusecommerce.common.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties.Http;
 import org.springframework.http.HttpStatus;
 
 @Getter
@@ -22,6 +23,7 @@ public enum ErrorCode {
     INVALID_ORDER_ITEM_QUANTITY("ORDER_005", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
     INVALID_ORDER_ITEM_PRICE("ORDER_006", "가격은 0원 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
     ALREADY_PAID_ORDER("ORDER_007", "이미 결제가 완료된 주문입니다.", HttpStatus.BAD_REQUEST),
+    FAIL_ORDER("ORDER_008", "주문이 실패하였습니다.", HttpStatus.CONFLICT),
 
     // Coupon
     COUPON_NOT_FOUND("COUPON_000", "쿠폰을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

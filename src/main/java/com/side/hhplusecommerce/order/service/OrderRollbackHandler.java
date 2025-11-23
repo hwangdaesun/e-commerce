@@ -17,12 +17,13 @@ import java.util.Objects;
 public class OrderRollbackHandler {
     private final CouponService couponService;
     private final ItemStockService itemStockService;
-
+    private final OrderService orderService;
     /**
      * 재고 차감 실패 시: 쿠폰만 롤백
      */
-    public void rollbackForStockFailure(Long userCouponId) {
+    public void rollbackForStockFailure(Long orderId, Long userCouponId) {
         log.info("Starting rollback for stock failure: userCouponId={}", userCouponId);
+        orderService.failOrder(orderId);
         rollbackCoupon(userCouponId);
     }
 
@@ -38,8 +39,9 @@ public class OrderRollbackHandler {
     /**
      * 결제 처리 실패 시: 쿠폰 + 재고 롤백 (주문은 취소 상태로 유지)
      */
-    public void rollbackForPaymentFailure(Long userCouponId, List<CartItem> cartItems, List<Item> items) {
+    public void rollbackForPaymentFailure(Long orderId, Long userCouponId, List<CartItem> cartItems, List<Item> items) {
         log.info("Starting rollback for payment failure: userCouponId={}", userCouponId);
+        orderService.failOrder(orderId);
         rollbackStock(cartItems, items);
         rollbackCoupon(userCouponId);
     }
