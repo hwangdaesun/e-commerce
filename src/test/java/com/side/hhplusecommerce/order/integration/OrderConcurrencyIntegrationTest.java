@@ -1,4 +1,4 @@
-package com.side.hhplusecommerce.order.usecase;
+package com.side.hhplusecommerce.order.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,6 +10,7 @@ import com.side.hhplusecommerce.cart.repository.CartItemRepository;
 import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
 import com.side.hhplusecommerce.order.repository.OrderRepository;
+import com.side.hhplusecommerce.order.usecase.OrderCreateUseCase;
 import com.side.hhplusecommerce.point.domain.UserPoint;
 import com.side.hhplusecommerce.point.repository.UserPointRepository;
 import java.util.List;
