@@ -29,7 +29,7 @@ class CouponIssueUseCaseTest {
         Long couponId = 1L;
         Long userId = 100L;
 
-        given(couponIssueLockService.issueCouponWithPessimisticLock(couponId, userId))
+        given(couponIssueLockService.issueCouponWithDistributedLock(couponId, userId))
                 .willThrow(new RuntimeException("Stock save failed"));
 
         // when & then
@@ -37,7 +37,7 @@ class CouponIssueUseCaseTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Stock save failed");
 
-        verify(couponIssueLockService).issueCouponWithPessimisticLock(couponId, userId);
+        verify(couponIssueLockService).issueCouponWithDistributedLock(couponId, userId);
     }
 
     @Test
@@ -47,7 +47,7 @@ class CouponIssueUseCaseTest {
         Long couponId = 1L;
         Long userId = 100L;
 
-        given(couponIssueLockService.issueCouponWithPessimisticLock(couponId, userId))
+        given(couponIssueLockService.issueCouponWithDistributedLock(couponId, userId))
                 .willThrow(new RuntimeException("DB connection failed"));
 
         // when & then
@@ -55,8 +55,6 @@ class CouponIssueUseCaseTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("DB connection failed");
 
-        verify(couponIssueLockService).issueCouponWithPessimisticLock(couponId, userId);
+        verify(couponIssueLockService).issueCouponWithDistributedLock(couponId, userId);
     }
-
-    // TODO: UserCoupon 저장 성공 후 예상치 못한 예외 발생 시 쿠폰 재고 롤백 및 유저 쿠폰 회수 테스트
 }

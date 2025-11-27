@@ -4,13 +4,14 @@ import com.side.hhplusecommerce.common.dto.CursorRequest;
 import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemStockResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
+import com.side.hhplusecommerce.item.controller.dto.ItemsResponse.ItemInfo;
 import com.side.hhplusecommerce.item.controller.dto.PopularItemsResponse;
 import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.domain.ItemValidator;
+import com.side.hhplusecommerce.item.dto.ItemDto;
+import com.side.hhplusecommerce.item.dto.PopularItemsDto;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
-import com.side.hhplusecommerce.item.repository.ItemViewRepository;
 import com.side.hhplusecommerce.item.service.ItemPopularityService;
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -21,12 +22,19 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ItemViewUseCase {
     private final ItemRepository itemRepository;
-    private final ItemViewRepository itemViewRepository;
     private final ItemPopularityService itemPopularityService;
     private final ItemValidator itemValidator;
 
-    public ItemResponse view(Long itemId) {
-        Item item = itemValidator.validateExistence(itemId);
+    public ItemResponse view(Long itemId, boolean isPopular) {
+        Item item;
+
+        // 인기 상품이면 캐싱된 조회 메서드 사용
+        if (isPopular) {
+            ItemDto itemDto = itemPopularityService.getItemV1(itemId);
+            return ItemResponse.from(itemDto);
+        } else {
+            item = itemValidator.validateExistence(itemId);
+        }
 
         return ItemResponse.from(item);
     }
@@ -43,7 +51,7 @@ public class ItemViewUseCase {
         boolean hasNext = items.size() > cursorRequest.getSize();
         List<ItemsResponse.ItemInfo> itemInfos = items.stream()
                 .limit(cursorRequest.getSize())
-                .map(ItemsResponse.ItemInfo::from)
+                .map(ItemInfo::from)
                 .toList();
 
         Long nextCursor = null;
@@ -61,9 +69,7 @@ public class ItemViewUseCase {
     }
 
     public PopularItemsResponse viewPopular(Integer limit) {
-        LocalDateTime threeDaysAgo = LocalDateTime.now().minusDays(3);
-        List<Item> popularItems = itemPopularityService.getPopularItemsV1(threeDaysAgo, limit);
-
-        return PopularItemsResponse.of(popularItems);
+        PopularItemsDto popularItemsDto = itemPopularityService.getPopularItemsV1(limit);
+        return PopularItemsResponse.of(popularItemsDto.getItems());
     }
 }

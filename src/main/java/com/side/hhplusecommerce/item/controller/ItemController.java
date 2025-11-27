@@ -30,9 +30,10 @@ public class ItemController implements ItemControllerDocs {
     @Override
     @GetMapping("/{itemId}")
     public ResponseEntity<ItemResponse> getItem(
-            @PathVariable Long itemId
+            @PathVariable Long itemId,
+            @RequestParam(defaultValue = "false") Boolean isPopular
     ) {
-        ItemResponse response = itemViewUseCase.view(itemId);
+        ItemResponse response = itemViewUseCase.view(itemId, isPopular);
         return ResponseEntity.ok(response);
     }
 

@@ -1,4 +1,4 @@
-package com.side.hhplusecommerce.order.usecase;
+package com.side.hhplusecommerce.order.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,6 +10,7 @@ import com.side.hhplusecommerce.cart.repository.CartItemRepository;
 import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
 import com.side.hhplusecommerce.order.repository.OrderRepository;
+import com.side.hhplusecommerce.order.usecase.OrderCreateUseCase;
 import com.side.hhplusecommerce.point.domain.UserPoint;
 import com.side.hhplusecommerce.point.repository.UserPointRepository;
 import java.util.List;
@@ -120,134 +121,6 @@ class OrderConcurrencyIntegrationTest extends ContainerTest {
         printTestResult(totalAttempts, successCount.get(), failCount.get(), resultItem.getStock(), orderCount);
     }
 
-//    @DisplayName("재고가 50개인 상품에 대해 200명이 각각 1개씩 동시 주문 시, 정확히 50개만 성공한다")
-//    @Test
-//    void concurrentOrderCreation_withLargerStock_shouldSucceedExactly50Orders() throws InterruptedException {
-//        // given
-//        int initialStock = 50;
-//        int threadCount = 200;
-//        int orderQuantity = 1;
-//        AtomicInteger successCount = new AtomicInteger(0);
-//        AtomicInteger failCount = new AtomicInteger(0);
-//
-//        // 상품 생성
-//        Item item = Item.builder()
-//                .name("인기 상품")
-//                .price(20000)
-//                .stock(initialStock)
-//                .build();
-//        Item savedItem = itemRepository.save(item);
-//
-//        // 200명의 사용자를 위한 Cart와 CartItem 생성
-//        for (long userId = 1; userId <= threadCount; userId++) {
-//            Cart cart = Cart.builder()
-//                    .userId(userId)
-//                    .build();
-//            Cart savedCart = cartRepository.save(cart);
-//
-//            CartItem cartItem = CartItem.create(
-//                    savedCart.getCartId(),
-//                    savedItem.getItemId(),
-//                    orderQuantity
-//            );
-//            cartItemRepository.save(cartItem);
-//        }
-//
-//        // when
-//        executeConcurrently(threadCount, (int threadIndex) -> {
-//            try {
-//                Long userId = (long) (threadIndex + 1);
-//                Cart cart = cartRepository.findByUserId(userId).orElseThrow();
-//                List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getCartId());
-//                List<Long> cartItemIds = cartItems.stream()
-//                        .map(CartItem::getCartItemId)
-//                        .toList();
-//
-//                orderCreateUseCase.create(userId, cartItemIds, null);
-//                successCount.incrementAndGet();
-//            } catch (Exception e) {
-//                failCount.incrementAndGet();
-//            }
-//        });
-//
-//        // then
-//        int totalAttempts = successCount.get() + failCount.get();
-//        Item resultItem = itemRepository.findById(savedItem.getItemId()).orElseThrow();
-//        long orderCount = orderRepository.count();
-//
-//        assertThat(totalAttempts).isEqualTo(threadCount);
-//        assertThat(successCount.get()).isEqualTo(initialStock);
-//        assertThat(failCount.get()).isEqualTo(threadCount - initialStock);
-//        assertThat(resultItem.getStock()).isZero();
-//        assertThat(orderCount).isEqualTo(initialStock);
-//
-//        printTestResult(totalAttempts, successCount.get(), failCount.get(), resultItem.getStock(), orderCount);
-//    }
-//
-//    @DisplayName("재고가 5개인 상품에 대해 10명이 각각 2개씩 동시 주문 시, 재고 초과 주문은 모두 실패한다")
-//    @Test
-//    void concurrentOrderCreation_withMultipleQuantity_shouldHandleStockCorrectly() throws InterruptedException {
-//        // given
-//        int initialStock = 5;
-//        int threadCount = 10;
-//        int orderQuantity = 2; // 각 주문마다 2개씩
-//        AtomicInteger successCount = new AtomicInteger(0);
-//        AtomicInteger failCount = new AtomicInteger(0);
-//
-//        // 상품 생성
-//        Item item = Item.builder()
-//                .name("한정 상품")
-//                .price(15000)
-//                .stock(initialStock)
-//                .build();
-//        Item savedItem = itemRepository.save(item);
-//
-//        // 10명의 사용자를 위한 Cart와 CartItem 생성
-//        for (long userId = 1; userId <= threadCount; userId++) {
-//            Cart cart = Cart.builder()
-//                    .userId(userId)
-//                    .build();
-//            Cart savedCart = cartRepository.save(cart);
-//
-//            CartItem cartItem = CartItem.create(
-//                    savedCart.getCartId(),
-//                    savedItem.getItemId(),
-//                    orderQuantity
-//            );
-//            cartItemRepository.save(cartItem);
-//        }
-//
-//        // when
-//        executeConcurrently(threadCount, (int threadIndex) -> {
-//            try {
-//                Long userId = (long) (threadIndex + 1);
-//                Cart cart = cartRepository.findByUserId(userId).orElseThrow();
-//                List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getCartId());
-//                List<Long> cartItemIds = cartItems.stream()
-//                        .map(CartItem::getCartItemId)
-//                        .toList();
-//
-//                orderCreateUseCase.create(userId, cartItemIds, null);
-//                successCount.incrementAndGet();
-//            } catch (Exception e) {
-//                failCount.incrementAndGet();
-//            }
-//        });
-//
-//        // then
-//        int totalAttempts = successCount.get() + failCount.get();
-//        Item resultItem = itemRepository.findById(savedItem.getItemId()).orElseThrow();
-//        long orderCount = orderRepository.count();
-//
-//        assertThat(totalAttempts).isEqualTo(threadCount);
-//        // 재고 5개, 각 주문 2개씩 -> 최대 2명만 성공 가능 (4개 소진), 3번째부터는 실패
-//        assertThat(successCount.get()).isLessThanOrEqualTo(initialStock / orderQuantity);
-//        assertThat(failCount.get()).isGreaterThanOrEqualTo(threadCount - (initialStock / orderQuantity));
-//        assertThat(resultItem.getStock()).isGreaterThanOrEqualTo(0); // 재고는 음수가 되면 안됨
-//        assertThat(resultItem.getStock()).isLessThan(orderQuantity); // 남은 재고는 주문 수량보다 작아야 함
-//
-//        printTestResult(totalAttempts, successCount.get(), failCount.get(), resultItem.getStock(), orderCount);
-//    }
 
     /**
      * 여러 스레드를 동시에 시작하여 작업을 실행하는 헬퍼 메서드

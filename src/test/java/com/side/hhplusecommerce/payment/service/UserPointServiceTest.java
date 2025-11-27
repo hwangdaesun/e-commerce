@@ -21,14 +21,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class UserPointServiceTest {
 
     @Mock
-    private UserPointLockService userPointLockService;
+    private UserPointTransactionService userPointTransactionService;
 
     @InjectMocks
     private UserPointService userPointService;
 
     @Test
     @DisplayName("사용자 포인트를 차감한다")
-    void use_PointWithPessimisticLock_success() {
+    void use_Point_success() {
         // given
         Long userId = 1L;
         Integer amount = 10000;
@@ -37,53 +37,53 @@ class UserPointServiceTest {
         userPointService.use(userId, amount);
 
         // then
-        verify(userPointLockService).usePointWithPessimisticLock(userId, amount);
+        verify(userPointTransactionService).usePoint(userId, amount);
     }
 
     @Test
     @DisplayName("사용자 포인트가 없으면 예외를 발생시킨다")
-    void use_PointWithPessimisticLock_fail_user_point_not_found() {
+    void use_Point_fail_user_point_not_found() {
         // given
         Long userId = 1L;
         Integer amount = 10000;
 
         doThrow(new CustomException(ErrorCode.USER_POINT_NOT_FOUND))
-                .when(userPointLockService).usePointWithPessimisticLock(userId, amount);
+                .when(userPointTransactionService).usePoint(userId, amount);
 
         // when & then
         assertThatThrownBy(() -> userPointService.use(userId, amount))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.USER_POINT_NOT_FOUND.getMessage());
 
-        verify(userPointLockService).usePointWithPessimisticLock(userId, amount);
+        verify(userPointTransactionService).usePoint(userId, amount);
     }
 
     @Test
     @DisplayName("포인트가 부족하면 예외를 발생시킨다")
-    void use_PointWithPessimisticLock_fail_insufficient_point() {
+    void use_Point_fail_insufficient_point() {
         // given
         Long userId = 1L;
         Integer amount = 10000;
 
         doThrow(new InsufficientPointException())
-                .when(userPointLockService).usePointWithPessimisticLock(userId, amount);
+                .when(userPointTransactionService).usePoint(userId, amount);
 
         // when & then
         assertThatThrownBy(() -> userPointService.use(userId, amount))
                 .isInstanceOf(InsufficientPointException.class);
 
-        verify(userPointLockService).usePointWithPessimisticLock(userId, amount);
+        verify(userPointTransactionService).usePoint(userId, amount);
     }
 
     @ParameterizedTest
     @ValueSource(ints = {0, -1, -100, -1000})
     @DisplayName("차감 금액이 0 이하면 예외를 발생시킨다")
-    void use_PointWithPessimisticLock_fail_invalid_amount(Integer amount) {
+    void use_Point_fail_invalid_amount(Integer amount) {
         // given
         Long userId = 1L;
 
         doThrow(new InvalidPointAmountException())
-                .when(userPointLockService).usePointWithPessimisticLock(userId, amount);
+                .when(userPointTransactionService).usePoint(userId, amount);
 
         // when & then
         assertThatThrownBy(() -> userPointService.use(userId, amount))

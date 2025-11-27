@@ -36,7 +36,9 @@ public class OrderTransactionService {
 
         // 2. 재고 확인 및 차감 (자식 트랜잭션 REQUIRES_NEW + 비관적 락)
         try {
-            itemStockService.decreaseStock(validCartItems, items);
+            for (CartItem cartItem : validCartItems) {
+                itemStockService.decreaseStockForItem(cartItem.getItemId(), cartItem.getQuantity());
+            }
         } catch (Exception e) {
             // 보상 트랜잭션으로 주문 취소, 쿠폰 사용 해제
             orderRollbackHandler.rollbackForStockFailure(userCouponId, orderCreateResult.getOrderId());

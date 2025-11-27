@@ -32,7 +32,7 @@ public class OrderRollbackHandler {
      */
     public void rollbackForOrderCreationFailure(Long userCouponId, List<CartItem> cartItems, List<Item> items) {
         log.info("Starting rollback for order creation failure: userCouponId={}", userCouponId);
-        rollbackStock(cartItems, items);
+        rollbackStock(cartItems);
         rollbackCoupon(userCouponId);
     }
 
@@ -42,7 +42,7 @@ public class OrderRollbackHandler {
     public void rollbackForPaymentFailure(Long orderId, Long userCouponId, List<CartItem> cartItems, List<Item> items) {
         log.info("Starting rollback for payment failure: userCouponId={}", userCouponId);
         orderService.failOrder(orderId);
-        rollbackStock(cartItems, items);
+        rollbackStock(cartItems);
         rollbackCoupon(userCouponId);
     }
 
@@ -59,9 +59,11 @@ public class OrderRollbackHandler {
         }
     }
 
-    private void rollbackStock(List<CartItem> cartItems, List<Item> items) {
+    private void rollbackStock(List<CartItem> cartItems) {
         try {
-            itemStockService.increaseStock(cartItems, items);
+            for (CartItem cartItem : cartItems) {
+                itemStockService.increaseStockForItem(cartItem.getItemId(), cartItem.getQuantity());
+            }
             log.info("Successfully rolled back stock for {} items", cartItems.size());
         } catch (Exception e) {
             log.error("Failed to rollback stock", e);

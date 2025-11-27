@@ -65,12 +65,11 @@ BEGIN
         WHILE i <= total_count DO
             SET category_name = SUBSTRING_INDEX(SUBSTRING_INDEX(category_names, ',', FLOOR(1 + RAND() * 10)), ',', -1);
 
-            INSERT INTO items (name, price, stock, sales_count, created_at, updated_at)
+            INSERT INTO items (name, price, stock, created_at, updated_at)
             VALUES (
                 CONCAT(category_name, '_', LPAD(i, 6, '0')),
                 FLOOR(1000 + RAND() * 499000),   -- 1,000 ~ 500,000원
                 FLOOR(10 + RAND() * 990),         -- 10 ~ 1,000개
-                FLOOR(RAND() * 50000),            -- 0 ~ 50,000 판매량
                 DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 730) DAY),
                 DATE_SUB(NOW(), INTERVAL FLOOR(RAND() * 30) DAY)
             );

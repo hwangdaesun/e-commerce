@@ -1,4 +1,4 @@
-package com.side.hhplusecommerce.coupon.service;
+package com.side.hhplusecommerce.coupon.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

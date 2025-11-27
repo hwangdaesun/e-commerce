@@ -20,6 +20,13 @@ spring:
         show_sql: true
     open-in-view: false
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ecommerce_redis_pass
+      timeout: 3000ms
+
 springdoc:
   api-docs:
     enabled: false
