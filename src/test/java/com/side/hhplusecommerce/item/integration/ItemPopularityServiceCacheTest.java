@@ -1,12 +1,14 @@
-package com.side.hhplusecommerce.item.service;
+package com.side.hhplusecommerce.item.integration;
 
 import static com.side.hhplusecommerce.config.RedisCacheConfig.ITEM;
 import static com.side.hhplusecommerce.config.RedisCacheConfig.LOW_STOCK_THRESHOLD;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.side.hhplusecommerce.ContainerTest;
 import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.dto.ItemDto;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
+import com.side.hhplusecommerce.item.service.ItemPopularityService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,11 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@ActiveProfiles("test")
-class ItemPopularityServiceCacheTest {
+class ItemPopularityServiceCacheTest extends ContainerTest {
 
     @Autowired
     private ItemPopularityService itemPopularityService;
