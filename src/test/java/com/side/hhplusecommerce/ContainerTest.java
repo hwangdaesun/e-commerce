@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -15,7 +16,7 @@ public abstract class ContainerTest {
     static final String MYSQL_IMAGE = "mysql:8.0";
     static final String REDIS_IMAGE = "redis:7-alpine";
     static final MySQLContainer<?> MYSQL_CONTAINER;
-    static final RedisContainer REDIS_CONTAINER;
+    static final GenericContainer REDIS_CONTAINER;
 
     static {
         MYSQL_CONTAINER = new MySQLContainer<>(MYSQL_IMAGE)
@@ -25,8 +26,7 @@ public abstract class ContainerTest {
                 .withReuse(true);
         MYSQL_CONTAINER.start();
 
-        REDIS_CONTAINER = new RedisContainer(DockerImageName.parse(REDIS_IMAGE))
-                .withReuse(true);
+        REDIS_CONTAINER = new GenericContainer<>(REDIS_IMAGE).withExposedPorts(6379).withReuse(true);
         REDIS_CONTAINER.start();
     }
 
@@ -39,5 +39,6 @@ public abstract class ContainerTest {
 
         registry.add("spring.data.redis.host", REDIS_CONTAINER::getHost);
         registry.add("spring.data.redis.port", () -> REDIS_CONTAINER.getMappedPort(6379).toString());
+        registry.add("spring.data.redis.password", () -> "");
     }
 }

@@ -32,7 +32,7 @@ public class DistributedLockAspect {
     private final ExpressionParser parser = new SpelExpressionParser();
 
     @Around("@annotation(distributedLock)")
-    public Object lock(ProceedingJoinPoint joinPoint, DistributedLock distributedLock) throws Throwable {
+    public Object lock(ProceedingJoinPoint joinPoint, com.side.hhplusecommerce.common.lock.distributed.DistributedLock distributedLock) throws Throwable {
         // LockKeyResolver 빈을 가져와서 프리픽스 획득
         LockKeyResolver keyResolver = applicationContext.getBean(
                 distributedLock.keyResolver(),

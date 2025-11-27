@@ -18,6 +18,13 @@ spring:
         show_sql: false
     open-in-view: false
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ecommerce_redis_pass
+      timeout: 3000ms
+
 decorator:
   p6spy:
     log-format: 'elapsed: %dms | category: %category | statement: %s'
