@@ -1,6 +1,5 @@
 package com.side.hhplusecommerce;
 
-import com.redis.testcontainers.RedisContainer;
 import com.side.hhplusecommerce.support.DatabaseClearExtension;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.ActiveProfiles;
@@ -8,7 +7,6 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.utility.DockerImageName;
 
 @ActiveProfiles("test")
 @ExtendWith(DatabaseClearExtension.class)
