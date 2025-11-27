@@ -33,6 +33,17 @@ public class RedisCacheConfig {
     public static final String POPULAR_ITEMS = "popular-items";  // 인기 상품 리스트
     public static final String ITEM = "item";  // 개별 Item 객체
 
+    /**
+     * 캐시 갱신 관련 상수
+     */
+    public static final String TEMP_SUFFIX = ":temp";  // 임시 키 접미사 (RENAME 전략용)
+
+    /**
+     * 재고 임계값 상수
+     * 이 재고 이하일 때는 캐시 사용 안 함 (실시간 정확도 중요)
+     */
+    public static final int LOW_STOCK_THRESHOLD = 10;
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         // ObjectMapper 설정 (LocalDateTime 등 Java 8 시간 API 직렬화 지원)
