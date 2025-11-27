@@ -1,16 +1,21 @@
 package com.side.hhplusecommerce.item.service;
 
+import static com.side.hhplusecommerce.config.RedisCacheConfig.ITEM;
+
+import com.side.hhplusecommerce.common.exception.CustomException;
+import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.item.domain.Item;
-import com.side.hhplusecommerce.item.domain.ItemPopularityStats;
+import com.side.hhplusecommerce.item.dto.ItemDto;
 import com.side.hhplusecommerce.item.dto.ItemViewCountDto;
-import com.side.hhplusecommerce.item.repository.ItemPopularityStatsRepository;
+import com.side.hhplusecommerce.item.dto.PopularItemDto;
+import com.side.hhplusecommerce.item.dto.PopularItemsDto;
 import com.side.hhplusecommerce.item.repository.ItemRepository;
 import com.side.hhplusecommerce.item.repository.ItemViewRepository;
 import com.side.hhplusecommerce.order.dto.ItemSalesCountDto;
 import com.side.hhplusecommerce.order.repository.OrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -20,7 +25,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import org.springframework.util.StopWatch;
 
 @Slf4j
 @Service
@@ -29,17 +33,29 @@ public class ItemPopularityService {
     private static final int VIEW_COUNT_WEIGHT = 1;
     private static final int SALES_COUNT_WEIGHT = 10;
     private static final int BATCH_SIZE = 1000;
-
     private final ItemRepository itemRepository;
     private final ItemViewRepository itemViewRepository;
     private final OrderItemRepository orderItemRepository;
-    private final ItemPopularityStatsRepository itemPopularityStatsRepository;
     private final JdbcTemplate jdbcTemplate;
 
+    /**
+     * 케이스 1, 2: @Cacheable을 사용한 인기 상품 조회
+     * - Key: "popular-items::{limit}"
+     * - Value: PopularItemsDto (Wrapper 객체)
+     * - TTL 1일
+     * - 최근 3일 기준으로 집계
+     *
+     * @param limit 조회할 인기 상품 개수
+     * @return 인기 상품 목록 Wrapper
+     */
+    @Cacheable(value = "popular-items", key = "#limit")
     @Transactional(readOnly = true)
-    public List<Item> getPopularItemsV1(LocalDateTime after, int limit) {
+    public PopularItemsDto getPopularItemsV1(int limit) {
+        // 최근 3일 기준
+        LocalDateTime threeDaysAgo = LocalDateTime.now().minusDays(3);
+
         // 조회수 집계
-        Map<Long, Long> viewCountMap = itemViewRepository.countViewsByItemIdGrouped(after)
+        Map<Long, Long> viewCountMap = itemViewRepository.countViewsByItemIdGrouped(threeDaysAgo)
                 .stream()
                 .collect(Collectors.toMap(
                         ItemViewCountDto::getItemId,
@@ -47,7 +63,7 @@ public class ItemPopularityService {
                 ));
 
         // 판매량 집계
-        Map<Long, Long> salesCountMap = orderItemRepository.countSalesByItemIdGrouped(after)
+        Map<Long, Long> salesCountMap = orderItemRepository.countSalesByItemIdGrouped(threeDaysAgo)
                 .stream()
                 .collect(Collectors.toMap(
                         ItemSalesCountDto::getItemId,
@@ -59,8 +75,6 @@ public class ItemPopularityService {
         itemIds.addAll(viewCountMap.keySet());
         itemIds.addAll(salesCountMap.keySet());
 
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
         // 인기도 계산 및 정렬
         List<Long> popularItemIds = itemIds.stream()
                 .map(itemId -> {
@@ -71,27 +85,30 @@ public class ItemPopularityService {
                 })
                 .sorted(Comparator.comparing(ItemPopularity::popularityScore).reversed())
                 .limit(limit)
-                .map(itemPopularity -> itemPopularity.itemId)
+                .map(ItemPopularity::itemId)
                 .toList();
-        // todo : 병렬 처리를 하면 어떻게 될까?
-        stopWatch.stop();
-        System.out.println(stopWatch.prettyPrint());
 
-        return itemRepository.findAllByItemIdIn(popularItemIds);
+        // Item 조회 및 DTO 변환
+        List<Item> items = itemRepository.findAllByItemIdIn(popularItemIds);
+        Map<Long, Item> itemMap = items.stream()
+                .collect(Collectors.toMap(Item::getItemId, item -> item));
+
+        // 인기도 순서대로 정렬하여 DTO 반환
+        List<PopularItemDto> popularItems = popularItemIds.stream()
+                .map(itemMap::get)
+                .filter(Objects::nonNull)
+                .map(PopularItemDto::from)
+                .toList();
+
+        return PopularItemsDto.of(popularItems);
     }
 
+    @Cacheable(value = ITEM, key = "#itemId")
     @Transactional(readOnly = true)
-    public List<Item> getPopularItemsV2(int limit) {
-        List<ItemPopularityStats> topStats = itemPopularityStatsRepository
-                .findTopByLatestBasedOnDate(PageRequest.of(0, limit));
-
-        List<Long> itemIds = topStats.stream()
-                .map(ItemPopularityStats::getItemId)
-                .toList();
-
-        return itemRepository.findAllByItemIdIn(itemIds).stream()
-                .sorted(Comparator.comparing(item -> itemIds.indexOf(item.getItemId())))
-                .toList();
+    public ItemDto getItemV1(Long itemId) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ITEM_NOT_FOUND));
+        return ItemDto.from(item);
     }
 
     /**
