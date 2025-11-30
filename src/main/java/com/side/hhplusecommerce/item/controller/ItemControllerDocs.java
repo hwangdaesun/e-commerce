@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "상품 관리", description = "상품 관리 API")
 public interface ItemControllerDocs {
@@ -35,7 +36,8 @@ public interface ItemControllerDocs {
     })
     ResponseEntity<ItemResponse> getItem(
             @Parameter(description = "조회할 상품 ID", required = true)
-            Long itemId
+            Long itemId,
+            @RequestParam(defaultValue = "false") Boolean isPopular
     );
 
     @Operation(summary = "인기 상품 조회", description = "최근 3일간 판매량 기준 상위 상품을 조회합니다.")

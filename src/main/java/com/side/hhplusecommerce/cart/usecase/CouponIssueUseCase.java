@@ -13,6 +13,6 @@ public class CouponIssueUseCase {
     private final CouponIssueLockService couponIssueLockService;
 
     public IssueCouponResponse issue(Long couponId, Long userId) {
-        return couponIssueLockService.issueCouponWithPessimisticLock(couponId, userId);
+        return couponIssueLockService.issueCouponWithDistributedLock(couponId, userId);
     }
 }

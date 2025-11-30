@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ItemStockServiceTest {
 
     @Mock
-    private ItemStockLockService itemStockLockService;
+    private ItemStockTransactionService itemStockTransactionService;
 
     @InjectMocks
     private ItemStockService itemStockService;
@@ -44,10 +44,12 @@ class ItemStockServiceTest {
         List<Item> items = List.of(item);
 
         // when
-        itemStockService.decreaseStock(cartItems, items);
+        for (CartItem ci : cartItems) {
+            itemStockService.decreaseStockForItem(ci.getItemId(), ci.getQuantity());
+        }
 
         // then
-        verify(itemStockLockService).decreaseStockWithPessimisticLock(1L, orderQuantity);
+        verify(itemStockTransactionService).decreaseStock(1L, orderQuantity);
     }
 
     @Test
@@ -70,14 +72,18 @@ class ItemStockServiceTest {
         List<Item> items = List.of(item);
 
         doThrow(new CustomException(ErrorCode.INSUFFICIENT_STOCK))
-                .when(itemStockLockService).decreaseStockWithPessimisticLock(1L, orderQuantity);
+                .when(itemStockTransactionService).decreaseStock(1L, orderQuantity);
 
         // when & then
-        assertThatThrownBy(() -> itemStockService.decreaseStock(cartItems, items))
+        assertThatThrownBy(() -> {
+            for (CartItem ci : cartItems) {
+                itemStockService.decreaseStockForItem(ci.getItemId(), ci.getQuantity());
+            }
+        })
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.INSUFFICIENT_STOCK.getMessage());
 
-        verify(itemStockLockService).decreaseStockWithPessimisticLock(1L, orderQuantity);
+        verify(itemStockTransactionService).decreaseStock(1L, orderQuantity);
     }
 
 }

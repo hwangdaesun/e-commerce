@@ -20,8 +20,21 @@ services:
     networks:
       - ecommerce-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis
+    command: redis-server --requirepass ecommerce_redis_pass
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ecommerce-network
+
 volumes:
   mysql_data:
+    driver: local
+  redis_data:
     driver: local
 
 networks:

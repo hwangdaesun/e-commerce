@@ -1,9 +1,7 @@
 package com.side.hhplusecommerce.order.usecase;
 
-import com.side.hhplusecommerce.cart.domain.Cart;
 import com.side.hhplusecommerce.cart.domain.CartItem;
 import com.side.hhplusecommerce.cart.domain.CartItemValidator;
-import com.side.hhplusecommerce.cart.repository.CartRepository;
 import com.side.hhplusecommerce.cart.service.CartItemService;
 import com.side.hhplusecommerce.coupon.domain.Coupon;
 import com.side.hhplusecommerce.coupon.service.CouponService;

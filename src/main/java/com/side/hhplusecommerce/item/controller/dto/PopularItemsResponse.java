@@ -1,6 +1,6 @@
 package com.side.hhplusecommerce.item.controller.dto;
 
-import com.side.hhplusecommerce.item.domain.Item;
+import com.side.hhplusecommerce.item.dto.PopularItemDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,18 +34,18 @@ public class PopularItemsResponse {
         @Schema(description = "재고 수량", example = "50")
         private Integer stock;
 
-        public static PopularItem of(Item item, Integer rank) {
+        public static PopularItem of(PopularItemDto dto, Integer rank) {
             return new PopularItem(
                     rank,
-                    item.getItemId(),
-                    item.getName(),
-                    item.getPrice(),
-                    item.getStock()
+                    dto.getItemId(),
+                    dto.getName(),
+                    dto.getPrice(),
+                    dto.getStock()
             );
         }
     }
 
-    public static PopularItemsResponse of(List<Item> items) {
+    public static PopularItemsResponse of(List<PopularItemDto> items) {
         List<PopularItem> popularItems = IntStream.range(0, items.size())
                 .mapToObj(index -> PopularItem.of(items.get(index), index + 1))
                 .toList();
