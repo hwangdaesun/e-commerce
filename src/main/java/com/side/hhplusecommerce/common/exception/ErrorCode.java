@@ -31,6 +31,7 @@ public enum ErrorCode {
     ALREADY_USED_COUPON("COUPON_002", "이미 사용된 쿠폰입니다.", HttpStatus.BAD_REQUEST),
     EXPIRED_COUPON("COUPON_003", "만료된 쿠폰입니다.", HttpStatus.BAD_REQUEST),
     ALREADY_ISSUED_COUPON("COUPON_004", "이미 발급받은 쿠폰입니다.", HttpStatus.CONFLICT),
+    ISSUE_COUPON_FAIL("COUPON_005", "쿠폰 발급에 실패하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // Cart
     INVALID_CART_ITEM_QUANTITY("CART_001", "수량은 1개 이상이어야 합니다.", HttpStatus.BAD_REQUEST),

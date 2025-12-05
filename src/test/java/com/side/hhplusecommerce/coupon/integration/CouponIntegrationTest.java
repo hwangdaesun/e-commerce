@@ -15,10 +15,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
+
+import static com.side.hhplusecommerce.coupon.infrastructure.redis.CouponIssueQueueConstants.*;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -41,6 +44,9 @@ class CouponIntegrationTest extends ContainerTest {
 
     @Autowired
     private UserCouponRepository userCouponRepository;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     private Long userWithCouponId;     // 쿠폰을 보유한 사용자 ID
     private Long userWithoutCouponId;  // 쿠폰이 없는 사용자 ID
@@ -82,6 +88,9 @@ class CouponIntegrationTest extends ContainerTest {
 
         CouponStock stock2 = CouponStock.of(availableCouponId, 10);
         couponStockRepository.save(stock2);
+
+        // Redis 재고 초기화 (Producer 필터링용)
+        redisTemplate.opsForValue().set(COUPON_STOCK_PREFIX + availableCouponId, 10);
     }
 
     @Test
@@ -102,13 +111,17 @@ class CouponIntegrationTest extends ContainerTest {
     }
 
     @Test
-    @DisplayName("[성공] 쿠폰 발급")
-    void issueCoupon_success() throws Exception {
+    @DisplayName("[성공] 쿠폰 발급 요청 - Queue에 추가됨")
+    void issueCoupon_enqueuedSuccessfully() throws Exception {
         IssueCouponRequest request = new IssueCouponRequest(userWithCouponId);
 
         mockMvc.perform(post("/api/coupons/{couponId}/issue", availableCouponId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated());
+                .andExpect(status().isAccepted());
+
+        // NOTE: Queue 기반 비동기 처리 방식이므로
+        // 실제 발급은 Consumer가 처리합니다.
+        // 발급 완료 검증은 별도의 통합 테스트에서 수행합니다.
     }
 }

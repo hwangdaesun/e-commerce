@@ -97,7 +97,8 @@ class ItemIntegrationTest extends ContainerTest {
     @DisplayName("[성공] 상품 상세 조회")
     void getItem_success() throws Exception {
         Item item = itemRepository.findAll().get(0);
-        mockMvc.perform(get("/api/items/{itemId}", item.getItemId()))
+        mockMvc.perform(get("/api/items/{itemId}", item.getItemId())
+                        .param("userId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.itemId").value(item.getItemId()))
                 .andExpect(jsonPath("$.name").value("Test Item 1"))
@@ -108,7 +109,8 @@ class ItemIntegrationTest extends ContainerTest {
     @Test
     @DisplayName("[실패] 상품 상세 조회 - 존재하지 않는 상품")
     void getItem_fail_notFound() throws Exception {
-        mockMvc.perform(get("/api/items/{itemId}", 999L))
+        mockMvc.perform(get("/api/items/{itemId}", 999L)
+                        .param("userId", "1"))
                 .andExpect(status().isNotFound());
     }
 

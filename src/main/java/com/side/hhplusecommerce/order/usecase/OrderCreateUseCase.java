@@ -8,6 +8,7 @@ import com.side.hhplusecommerce.coupon.service.CouponService;
 import com.side.hhplusecommerce.coupon.service.dto.CouponUseResult;
 import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.domain.ItemValidator;
+import com.side.hhplusecommerce.item.service.ItemPopularityService;
 import com.side.hhplusecommerce.order.controller.dto.CreateOrderResponse;
 import com.side.hhplusecommerce.order.service.ExternalDataPlatformService;
 import com.side.hhplusecommerce.order.service.OrderTransactionService;
@@ -26,6 +27,7 @@ public class OrderCreateUseCase {
     private final CouponService couponService;
     private final ExternalDataPlatformService externalDataPlatformService;
     private final OrderTransactionService orderTransactionService;
+    private final ItemPopularityService itemPopularityService;
 
     public CreateOrderResponse create(Long userId, List<Long> cartItemIds, Long userCouponId) {
 
@@ -47,7 +49,9 @@ public class OrderCreateUseCase {
         OrderCreateResult orderCreateResult = orderTransactionService.executeCoreOrderTransaction(
                 userId, validCartItems, items, totalAmount, couponDiscount, userCouponId);
 
-        // 4. 비동기 후처리 (트랜잭션 밖)
+        // 4. 후처리 (트랜잭션 밖)
+        items.forEach(item -> itemPopularityService.incrementSalesScore(item.getItemId()));
+
         cartItemService.deleteCartItemsAsync(validCartItems.get(0).getCartId());
 
         externalDataPlatformService.sendOrderDataAsync(orderCreateResult.getOrderId());

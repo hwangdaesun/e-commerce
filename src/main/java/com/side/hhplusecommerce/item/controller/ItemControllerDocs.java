@@ -1,5 +1,6 @@
 package com.side.hhplusecommerce.item.controller;
 
+import com.side.hhplusecommerce.item.constants.PopularityPeriod;
 import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemStockResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
@@ -37,18 +38,19 @@ public interface ItemControllerDocs {
     ResponseEntity<ItemResponse> getItem(
             @Parameter(description = "조회할 상품 ID", required = true)
             Long itemId,
-            @RequestParam(defaultValue = "false") Boolean isPopular
+            @Parameter(description = "사용자 ID", required = true)
+            Long userId
     );
 
-    @Operation(summary = "인기 상품 조회", description = "최근 3일간 판매량 기준 상위 상품을 조회합니다.")
+    @Operation(summary = "인기 상품 조회", description = "일간/주간 인기 상품을 조회합니다. 조회수와 판매량을 기반으로 랭킹이 계산됩니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     ResponseEntity<PopularItemsResponse> getPopularItems(
-            @Parameter(description = "조회할 상품 수 (기본값: 5, 최대: 10)")
-            Integer limit
+            @Parameter(description = "조회 기간 (DAILY: 일간, WEEKLY: 주간, 기본값: WEEKLY)")
+            PopularityPeriod period
     );
 
     @Operation(summary = "상품 재고 확인", description = "특정 상품의 실시간 재고를 조회합니다.")
