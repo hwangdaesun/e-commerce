@@ -1,6 +1,7 @@
 package com.side.hhplusecommerce.item.controller;
 
 import com.side.hhplusecommerce.common.dto.CursorRequest;
+import com.side.hhplusecommerce.item.constants.PopularityPeriod;
 import com.side.hhplusecommerce.item.controller.dto.ItemResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemStockResponse;
 import com.side.hhplusecommerce.item.controller.dto.ItemsResponse;
@@ -31,18 +32,18 @@ public class ItemController implements ItemControllerDocs {
     @GetMapping("/{itemId}")
     public ResponseEntity<ItemResponse> getItem(
             @PathVariable Long itemId,
-            @RequestParam(defaultValue = "false") Boolean isPopular
+            @RequestParam(required = true) Long userId
     ) {
-        ItemResponse response = itemViewUseCase.view(itemId, isPopular);
+        ItemResponse response = itemViewUseCase.view(itemId, userId);
         return ResponseEntity.ok(response);
     }
 
     @Override
     @GetMapping("/popular")
     public ResponseEntity<PopularItemsResponse> getPopularItems(
-            @RequestParam(defaultValue = "5") Integer limit
+            @RequestParam(defaultValue = "WEEKLY") PopularityPeriod period
     ) {
-        PopularItemsResponse response = itemViewUseCase.viewPopular(limit);
+        PopularItemsResponse response = itemViewUseCase.viewPopular(period);
         return ResponseEntity.ok(response);
     }
 

@@ -26,7 +26,6 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class CouponIssueTransactionService {
     private final CouponRepository couponRepository;
     private final CouponStockRepository couponStockRepository;
