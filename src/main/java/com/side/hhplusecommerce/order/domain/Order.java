@@ -40,8 +40,17 @@ public class Order extends BaseEntity {
     @Column(name = "final_amount", nullable = false)
     private Integer finalAmount;
 
+    @Column(name = "is_stock_reserved", nullable = false)
+    private boolean isStockReserved = false;
+
+    @Column(name = "is_coupon_used")
+    private Boolean isCouponUsed;
+
+    @Column(name = "fail_reason", length = 50)
+    private String failReason;
+
     @Builder(access = AccessLevel.PRIVATE)
-    private Order(Long orderId, Long userId, OrderStatus status, Integer totalAmount, Integer couponDiscount, Integer finalAmount) {
+    private Order(Long orderId, Long userId, OrderStatus status, Integer totalAmount, Integer couponDiscount, Integer finalAmount, boolean isStockReserved, Boolean isCouponUsed, String failReason) {
         super();
         this.orderId = orderId;
         this.userId = userId;
@@ -49,6 +58,9 @@ public class Order extends BaseEntity {
         this.totalAmount = totalAmount;
         this.couponDiscount = couponDiscount;
         this.finalAmount = finalAmount;
+        this.isStockReserved = isStockReserved;
+        this.isCouponUsed = isCouponUsed;
+        this.failReason = failReason;
     }
 
     public static Order create(Long orderId, Long userId, Integer totalAmount, Integer couponDiscount) {
@@ -88,6 +100,28 @@ public class Order extends BaseEntity {
 
     public void fail() {
         this.status = OrderStatus.FAILED;
+    }
+
+    public void fail(String failReason) {
+        this.status = OrderStatus.FAILED;
+        this.failReason = failReason;
+    }
+
+    public void markStockReserved() {
+        this.isStockReserved = true;
+    }
+
+    public void markCouponUsed() {
+        this.isCouponUsed = true;
+    }
+
+    public Boolean isCouponUsed() {
+        return isCouponUsed;
+    }
+
+    public boolean isReadyForPayment() {
+        // 재고 예약 완료 && (쿠폰 사용 완료 OR 쿠폰 미사용)
+        return isStockReserved && (isCouponUsed == null || Boolean.TRUE.equals(isCouponUsed));
     }
 
 }
