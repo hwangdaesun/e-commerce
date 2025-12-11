@@ -1,5 +1,7 @@
 package com.side.hhplusecommerce.order.domain;
 
+import com.side.hhplusecommerce.cart.domain.CartItem;
+import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemItemIdException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemOrderIdException;
 import com.side.hhplusecommerce.order.exception.InvalidOrderItemPriceException;
@@ -11,7 +13,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -88,6 +94,36 @@ public class OrderItem {
                 .quantity(quantity)
                 .userCouponId(userCouponId)
                 .build();
+    }
+
+    /**
+     * CartItem과 Item 리스트로부터 OrderItem 리스트를 생성하는 정적 팩토리 메서드
+     * @param orderId 주문 ID
+     * @param cartItems 장바구니 아이템 리스트
+     * @param items 상품 리스트
+     * @param userCouponId 사용자 쿠폰 ID (nullable)
+     * @return OrderItem 리스트
+     */
+    public static List<OrderItem> createAll(Long orderId, List<CartItem> cartItems, List<Item> items, Long userCouponId) {
+        Map<Long, Item> itemMap = items.stream()
+                .collect(Collectors.toMap(Item::getItemId, item -> item));
+
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (CartItem cartItem : cartItems) {
+            Item item = itemMap.get(cartItem.getItemId());
+            if (item != null) {
+                OrderItem orderItem = OrderItem.create(
+                        orderId,
+                        item.getItemId(),
+                        item.getName(),
+                        item.getPrice(),
+                        cartItem.getQuantity(),
+                        userCouponId
+                );
+                orderItems.add(orderItem);
+            }
+        }
+        return orderItems;
     }
 
     private static void validateReferentialIntegrity(Long orderId, Long itemId) {

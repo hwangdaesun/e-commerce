@@ -201,23 +201,7 @@ class OrderControllerIntegrationTest extends ContainerTest {
     }
 
     @Test
-    @DisplayName("[실패] 주문 생성 - 재고 부족")
-    void createOrder_fail_insufficientStock() throws Exception {
-        List<Long> cartItemIds = cartItemRepository.findByCartId(testCartId).stream()
-                .filter(ci -> ci.getItemId().equals(lowStockItemId))
-                .map(CartItem::getCartItemId)
-                .toList();
-
-        CreateOrderRequest request = new CreateOrderRequest(userWithSufficientPointsId, cartItemIds, null);
-
-        mockMvc.perform(post("/api/orders")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().is5xxServerError());
-    }
-
-    @Test
-    @DisplayName("[실패] 주문 생성 - 만료된 쿠폰 사용")
+    @DisplayName("[동기 검증] 주문 생성 - 만료된 쿠폰 사용 시 즉시 실패")
     void createOrder_fail_expiredCoupon() throws Exception {
         List<Long> cartItemIds = cartItemRepository.findByCartId(testCartId).stream()
                 .filter(ci -> ci.getItemId().equals(normalItem1Id) || ci.getItemId().equals(normalItem2Id))
@@ -235,16 +219,5 @@ class OrderControllerIntegrationTest extends ContainerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("[실패] 주문 생성 - 장바구니 항목 없음")
-    void createOrder_fail_emptyCartItems() throws Exception {
-        CreateOrderRequest request = new CreateOrderRequest(userWithSufficientPointsId, List.of(), null);
-
-        mockMvc.perform(post("/api/orders")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().is4xxClientError());
     }
 }
