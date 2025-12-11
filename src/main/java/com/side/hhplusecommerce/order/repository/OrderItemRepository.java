@@ -16,4 +16,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
            "WHERE o.status = 'PAID' AND o.createdAt > :after " +
            "GROUP BY oi.itemId")
     List<ItemSalesCountDto> countSalesByItemIdGrouped(@Param("after") LocalDateTime after);
+
+    List<OrderItem> findByOrderId(Long orderId);
 }

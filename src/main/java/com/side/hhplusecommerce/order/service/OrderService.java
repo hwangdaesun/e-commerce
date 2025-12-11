@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,55 +26,22 @@ public class OrderService {
         Order order = Order.create(null, userId, totalAmount, couponDiscount);
         Order savedOrder = orderRepository.save(order);
 
-        Map<Long, Item> itemMap = items.stream()
-                .collect(Collectors.toMap(Item::getItemId, item -> item));
-
-        List<OrderItem> orderItems = new ArrayList<>();
-        for (CartItem cartItem : cartItems) {
-            Item item = itemMap.get(cartItem.getItemId());
-            if (item != null) {
-                OrderItem orderItem = OrderItem.create(
-                        savedOrder.getOrderId(),
-                        item.getItemId(),
-                        item.getName(),
-                        item.getPrice(),
-                        cartItem.getQuantity(),
-                        userCouponId
-                );
-                orderItems.add(orderItem);
-            }
-        }
+        List<OrderItem> orderItems = OrderItem.createAll(
+                savedOrder.getOrderId(),
+                cartItems,
+                items,
+                userCouponId
+        );
 
         List<OrderItem> savedOrderItems = orderItemRepository.saveAll(orderItems);
 
-        // 엔티티를 DTO로 변환
-        List<OrderCreateResult.OrderItemDto> orderItemDtos = savedOrderItems.stream()
-                .map(orderItem -> OrderCreateResult.OrderItemDto.builder()
-                        .orderItemId(orderItem.getOrderItemId())
-                        .orderId(orderItem.getOrderId())
-                        .itemId(orderItem.getItemId())
-                        .name(orderItem.getName())
-                        .price(orderItem.getPrice())
-                        .quantity(orderItem.getQuantity())
-                        .userCouponId(orderItem.getUserCouponId())
-                        .build())
-                .toList();
-
-        return OrderCreateResult.builder()
-                .orderId(savedOrder.getOrderId())
-                .userId(savedOrder.getUserId())
-                .totalAmount(savedOrder.getTotalAmount())
-                .couponDiscount(savedOrder.getCouponDiscount())
-                .finalAmount(savedOrder.getFinalAmount())
-                .createdAt(savedOrder.getCreatedAt())
-                .orderItems(orderItemDtos)
-                .build();
+        // 팩터리 메서드를 사용하여 DTO 생성
+        return OrderCreateResult.from(savedOrder, savedOrderItems);
     }
 
     @Transactional
     public void completeOrderPayment(Order order) {
         order.completePay();
-        orderRepository.save(order);
     }
 
     @Transactional
@@ -85,7 +49,6 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
         order.completePay();
-        orderRepository.save(order);
     }
 
     @Transactional
@@ -93,6 +56,42 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
         order.fail();
-        orderRepository.save(order);
+    }
+
+    @Transactional
+    public void failOrder(Long orderId, String failReason) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+        order.fail(failReason);
+    }
+
+    /**
+     * 비관적 락으로 주문 조회 후 재고 예약 플래그 업데이트
+     * @return 결제 준비 여부 (isStockReserved && isCouponUsed)
+     */
+    @Transactional
+    public boolean markStockReservedWithLock(Long orderId) {
+        Order order = orderRepository.findByIdWithLock(orderId)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+        order.markStockReserved();
+        return order.isReadyForPayment();
+    }
+
+    /**
+     * 비관적 락으로 주문 조회 후 쿠폰 사용 플래그 업데이트
+     * @return 결제 준비 여부 (isStockReserved && isCouponUsed)
+     */
+    @Transactional
+    public boolean markCouponUsedWithLock(Long orderId) {
+        Order order = orderRepository.findByIdWithLock(orderId)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
+        order.markCouponUsed();
+        return order.isReadyForPayment();
+    }
+
+    @Transactional(readOnly = true)
+    public Order findById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
     }
 }
