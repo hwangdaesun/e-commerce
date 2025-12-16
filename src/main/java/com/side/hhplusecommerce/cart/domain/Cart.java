@@ -29,4 +29,10 @@ public class Cart extends BaseEntity {
         this.cartId = cartId;
         this.userId = userId;
     }
+
+    public static Cart create(Long userId) {
+        return Cart.builder()
+                .userId(userId)
+                .build();
+    }
 }
