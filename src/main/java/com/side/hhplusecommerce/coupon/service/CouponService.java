@@ -3,8 +3,10 @@ package com.side.hhplusecommerce.coupon.service;
 import com.side.hhplusecommerce.common.exception.CustomException;
 import com.side.hhplusecommerce.common.exception.ErrorCode;
 import com.side.hhplusecommerce.coupon.domain.Coupon;
+import com.side.hhplusecommerce.coupon.domain.CouponStock;
 import com.side.hhplusecommerce.coupon.domain.UserCoupon;
 import com.side.hhplusecommerce.coupon.repository.CouponRepository;
+import com.side.hhplusecommerce.coupon.repository.CouponStockRepository;
 import com.side.hhplusecommerce.coupon.repository.UserCouponRepository;
 import com.side.hhplusecommerce.coupon.service.dto.CouponUseResult;
 import com.side.hhplusecommerce.order.event.CompensateCouponCommand;
@@ -19,6 +21,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CouponService {
     private final UserCouponRepository userCouponRepository;
     private final CouponRepository couponRepository;
+    private final CouponStockRepository couponStockRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
@@ -81,6 +86,37 @@ public class CouponService {
 
         return couponRepository.findById(userCoupon.getCouponId())
                 .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
+    }
+
+    /**
+     * 쿠폰 발급 가능 여부 확인 및 남은 재고 반환
+     * 쿠폰이 유효한지(만료되지 않았는지) 검증하고 CouponStock의 remainingQuantity를 반환합니다.
+     *
+     * @param couponId 쿠폰 ID
+     * @return 남은 재고 수량 (CouponStock.remainingQuantity)
+     */
+    public Integer validateAndGetRemainingQuantity(Long couponId) {
+        // 쿠폰 조회 및 만료 검증
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
+
+        // 쿠폰 만료 검증
+        if (isExpired(coupon.getExpiresAt())) {
+            throw new CustomException(ErrorCode.EXPIRED_COUPON);
+        }
+
+        // 쿠폰 재고 조회
+        CouponStock couponStock = couponStockRepository.findByCouponId(couponId)
+                .orElseThrow(() -> new CustomException(ErrorCode.COUPON_NOT_FOUND));
+
+        return couponStock.getRemainingQuantity();
+    }
+
+    /**
+     * 쿠폰 만료 여부 확인
+     */
+    private boolean isExpired(LocalDateTime expiresAt) {
+        return LocalDateTime.now().isAfter(expiresAt);
     }
 
     /**
