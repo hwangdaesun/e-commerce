@@ -7,9 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-/**
- * Redis Stream에 저장될 쿠폰 발급 메시지
- */
 @Getter
 @Builder
 @NoArgsConstructor
