@@ -9,17 +9,20 @@ import com.side.hhplusecommerce.item.domain.Item;
 import com.side.hhplusecommerce.item.domain.ItemValidator;
 import com.side.hhplusecommerce.order.controller.dto.CreateOrderResponse;
 import com.side.hhplusecommerce.order.event.OrderCreatedEvent;
+import com.side.hhplusecommerce.order.infrastructure.kafka.OrderEventKafkaProducer;
+import com.side.hhplusecommerce.order.infrastructure.redis.OrderEventTracker;
 import com.side.hhplusecommerce.order.service.OrderService;
 import com.side.hhplusecommerce.order.service.dto.OrderCreateResult;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+
+import static com.side.hhplusecommerce.order.infrastructure.kafka.OrderEventKafkaConstants.*;
 
 /**
  * 주문 생성 유스케이스
- * 주문 생성 진입점이며, 검증 및 주문 생성 후 이벤트를 발행합니다.
+ * 주문 생성 진입점이며, 검증 및 주문 생성 후 이벤트를 Kafka로 발행합니다.
  * 이후의 플로우는 OrderCreateFlowManager가 관리합니다.
  */
 @Slf4j
@@ -31,7 +34,8 @@ public class OrderCreateUseCase {
     private final ItemValidator itemValidator;
     private final CouponService couponService;
     private final OrderService orderService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OrderEventKafkaProducer kafkaProducer;
+    private final OrderEventTracker orderEventTracker;
 
     /**
      * 주문 생성 진입점 - 검증 후 주문을 생성하고 OrderCreatedEvent 발행
@@ -54,7 +58,10 @@ public class OrderCreateUseCase {
         OrderCreateResult orderCreateResult = orderService.createOrder(
                 userId, validCartItems, items, totalAmount, couponDiscount, userCouponId);
 
-        // 3. OrderCreatedEvent 발행 (ItemStockService와 CouponService가 리슨)
+        // 3. Redis에 이벤트 추적 상태 초기화 (재고: false, 쿠폰: false 또는 없으면 true)
+        orderEventTracker.initialize(orderCreateResult.getOrderId(), userCouponId != null);
+
+        // 4. OrderCreatedEvent 발행 (Kafka - ItemStockService와 CouponService가 리슨)
         OrderCreatedEvent event = OrderCreatedEvent.of(
                 orderCreateResult.getOrderId(),
                 userId,
@@ -62,7 +69,10 @@ public class OrderCreateUseCase {
                 items,
                 userCouponId
         );
-        eventPublisher.publishEvent(event);
+        kafkaProducer.publish(TOPIC_ORDER_CREATED, event.getOrderId().toString(), event);
+
+        log.info("OrderCreatedEvent Kafka 발행: orderId={}", event.getOrderId());
+
         return CreateOrderResponse.of(orderCreateResult, coupon);
     }
 

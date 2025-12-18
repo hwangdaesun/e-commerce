@@ -65,30 +65,6 @@ public class OrderService {
         order.fail(failReason);
     }
 
-    /**
-     * 비관적 락으로 주문 조회 후 재고 예약 플래그 업데이트
-     * @return 결제 준비 여부 (isStockReserved && isCouponUsed)
-     */
-    @Transactional
-    public boolean markStockReservedWithLock(Long orderId) {
-        Order order = orderRepository.findByIdWithLock(orderId)
-                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
-        order.markStockReserved();
-        return order.isReadyForPayment();
-    }
-
-    /**
-     * 비관적 락으로 주문 조회 후 쿠폰 사용 플래그 업데이트
-     * @return 결제 준비 여부 (isStockReserved && isCouponUsed)
-     */
-    @Transactional
-    public boolean markCouponUsedWithLock(Long orderId) {
-        Order order = orderRepository.findByIdWithLock(orderId)
-                .orElseThrow(() -> new RuntimeException("주문을 찾을 수 없습니다."));
-        order.markCouponUsed();
-        return order.isReadyForPayment();
-    }
-
     @Transactional(readOnly = true)
     public Order findById(Long orderId) {
         return orderRepository.findById(orderId)
