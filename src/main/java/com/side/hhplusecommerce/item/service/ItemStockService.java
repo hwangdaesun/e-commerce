@@ -13,18 +13,18 @@ import com.side.hhplusecommerce.order.event.CompensateStockCommand;
 import com.side.hhplusecommerce.order.event.OrderCreatedEvent;
 import com.side.hhplusecommerce.order.event.StockFailedEvent;
 import com.side.hhplusecommerce.order.event.StockReservedEvent;
+import com.side.hhplusecommerce.order.infrastructure.kafka.OrderEventKafkaProducer;
 import com.side.hhplusecommerce.order.repository.OrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+
+import static com.side.hhplusecommerce.order.infrastructure.kafka.OrderEventKafkaConstants.*;
 
 /**
  * 상품 재고 서비스
@@ -37,7 +37,7 @@ import java.util.Map;
 public class ItemStockService {
     private final ItemRepository itemRepository;
     private final OrderItemRepository orderItemRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OrderEventKafkaProducer kafkaProducer;
     private final CacheManager cacheManager;
 
     /**
@@ -79,10 +79,8 @@ public class ItemStockService {
     }
 
     /**
-     * OrderCreatedEvent 리스너 - 재고 예약 처리 (비동기)
+     * OrderCreatedEvent 처리 - 재고 예약 처리
      */
-    @Async
-    @EventListener
     public void handleOrderCreatedEvent(OrderCreatedEvent event) {
         log.info("ItemStockService received OrderCreatedEvent: orderId={}, itemIds={}",
                 event.getOrderId(), event.getItemIds());
@@ -98,19 +96,19 @@ public class ItemStockService {
             }
 
             log.info("Stock reservation successful for orderId={}", event.getOrderId());
-            eventPublisher.publishEvent(StockReservedEvent.of(event.getOrderId()));
+            StockReservedEvent stockReservedEvent = StockReservedEvent.of(event.getOrderId());
+            kafkaProducer.publish(TOPIC_STOCK_RESERVED, event.getOrderId().toString(), stockReservedEvent);
 
         } catch (Exception e) {
             log.error("Stock reservation failed for orderId={}", event.getOrderId(), e);
-            eventPublisher.publishEvent(StockFailedEvent.of(event.getOrderId(), e.getMessage()));
+            StockFailedEvent stockFailedEvent = StockFailedEvent.of(event.getOrderId(), e.getMessage());
+            kafkaProducer.publish(TOPIC_STOCK_FAILED, event.getOrderId().toString(), stockFailedEvent);
         }
     }
 
     /**
-     * CompensateStockCommand 리스너 - 재고 복구 처리 (비동기)
+     * CompensateStockCommand 처리 - 재고 복구 처리
      */
-    @Async
-    @EventListener
     public void handleCompensateStockCommand(CompensateStockCommand command) {
         log.info("ItemStockService received CompensateStockCommand: orderId={}, itemQuantities={}",
                 command.getOrderId(), command.getItemQuantities());

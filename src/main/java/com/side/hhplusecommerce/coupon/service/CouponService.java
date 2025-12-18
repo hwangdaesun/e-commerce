@@ -13,15 +13,15 @@ import com.side.hhplusecommerce.order.event.CompensateCouponCommand;
 import com.side.hhplusecommerce.order.event.CouponFailedEvent;
 import com.side.hhplusecommerce.order.event.CouponUsedEvent;
 import com.side.hhplusecommerce.order.event.OrderCreatedEvent;
+import com.side.hhplusecommerce.order.infrastructure.kafka.OrderEventKafkaProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+
+import static com.side.hhplusecommerce.order.infrastructure.kafka.OrderEventKafkaConstants.*;
 
 @Slf4j
 @Service
@@ -31,7 +31,7 @@ public class CouponService {
     private final UserCouponRepository userCouponRepository;
     private final CouponRepository couponRepository;
     private final CouponStockRepository couponStockRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OrderEventKafkaProducer kafkaProducer;
 
     @Transactional
     public CouponUseResult useCoupon(Long userCouponId) {
@@ -120,10 +120,8 @@ public class CouponService {
     }
 
     /**
-     * OrderCreatedEvent 리스너 - 쿠폰 사용 처리 (비동기)
+     * OrderCreatedEvent 처리 - 쿠폰 사용 처리
      */
-    @Async
-    @EventListener
     @Transactional
     public void handleOrderCreatedEvent(OrderCreatedEvent event) {
         if (event.getUserCouponId() == null) {
@@ -144,19 +142,19 @@ public class CouponService {
             userCoupon.use(coupon.getExpiresAt());
 
             log.info("Coupon used successfully for orderId={}", event.getOrderId());
-            eventPublisher.publishEvent(CouponUsedEvent.of(event.getOrderId()));
+            CouponUsedEvent couponUsedEvent = CouponUsedEvent.of(event.getOrderId());
+            kafkaProducer.publish(TOPIC_COUPON_USED, event.getOrderId().toString(), couponUsedEvent);
 
         } catch (Exception e) {
             log.error("Coupon usage failed for orderId={}", event.getOrderId(), e);
-            eventPublisher.publishEvent(CouponFailedEvent.of(event.getOrderId(), e.getMessage()));
+            CouponFailedEvent couponFailedEvent = CouponFailedEvent.of(event.getOrderId(), e.getMessage());
+            kafkaProducer.publish(TOPIC_COUPON_FAILED, event.getOrderId().toString(), couponFailedEvent);
         }
     }
 
     /**
-     * CompensateCouponCommand 리스너 - 쿠폰 복구 처리 (비동기)
+     * CompensateCouponCommand 처리 - 쿠폰 복구 처리
      */
-    @Async
-    @EventListener
     @Transactional
     public void handleCompensateCouponCommand(CompensateCouponCommand command) {
         log.info("CouponService received CompensateCouponCommand: orderId={}, userCouponId={}",

@@ -42,4 +42,30 @@ public class KafkaProducerConfig {
     public KafkaTemplate<String, CouponIssueMessage> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
+
+    /**
+     * Object 타입 지원하는 Producer Factory (주문 이벤트용)
+     */
+    @Bean
+    public ProducerFactory<String, Object> objectProducerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+
+        // Producer 설정
+        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
+        configProps.put(ProducerConfig.RETRIES_CONFIG, 3);
+        configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    /**
+     * Object 타입 지원하는 KafkaTemplate (주문 이벤트용)
+     */
+    @Bean
+    public KafkaTemplate<String, Object> objectKafkaTemplate() {
+        return new KafkaTemplate<>(objectProducerFactory());
+    }
 }
