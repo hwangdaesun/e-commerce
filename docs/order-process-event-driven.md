@@ -5,7 +5,7 @@
 - **Concurrency Control**:
   - **Stock/Point**: Redisson Distributed Lock
   - **Coupon**: JPA Optimistic Lock (@Version)
-  - **Order Aggregation**: JPA Pessimistic Lock (SELECT FOR UPDATE)
+  - **Event Tracking**: Redis Hash (이벤트 수신 여부 추적)
 - **Payment Processing**: Synchronous
 - **Stock & Coupon Processing**: Asynchronous (Parallel)
 
@@ -22,6 +22,7 @@ sequenceDiagram
     participant ISS as ItemStockService
     participant CS as CouponService
     participant UPS as UserPointService
+    participant EDPC as SendOrderDataEventKafkaConsumer
     participant EDP as ExternalDataPlatformService
 
     Note over Client,EDP: 1. 주문 생성 및 이벤트 발행 (Scatter)
@@ -34,6 +35,8 @@ sequenceDiagram
 
     UC->>OS: createOrder(PENDING 상태)
     OS-->>UC: Order 생성 완료<br/>(status=PENDING)
+
+    UC->>UC: Redis에 이벤트 추적 상태 초기화<br/>(stockReserved=false, couponUsed=false/true)
 
     UC->>UC: publish(OrderCreatedEvent)
     Note over UC: 이벤트 비동기 발행<br/>UseCase 역할 종료
@@ -67,29 +70,22 @@ sequenceDiagram
 
     ISS-->>OCFM: @EventListener(StockReservedEvent)
     activate OCFM
-    OCFM->>OS: markStockReservedWithLock(orderId)
-    activate OS
-    OS->>OS: SELECT * FROM orders<br/>WHERE order_id = ?<br/>FOR UPDATE
-    Note over OS: 비관적 락 획득<br/>(다른 스레드는 대기)
-    OS->>OS: UPDATE orders<br/>SET is_stock_reserved = true
-    OS->>OS: isReadyForPayment()?<br/>(isStockReserved && <br/>(isCouponUsed == null || isCouponUsed))
-    OS-->>OCFM: false (쿠폰 처리 대기 중)
-    Note over OS: 트랜잭션 커밋 & 락 해제
-    deactivate OS
+    OCFM->>OCFM: Redis HSET<br/>order:event:tracker:{orderId}<br/>stockReserved = true
+    OCFM->>OCFM: Redis HGETALL로<br/>isReadyForPayment() 체크
+    Note over OCFM: stockReserved=true && <br/>couponUsed=true/null?
+    OCFM-->>OCFM: false (쿠폰 처리 대기 중)
     deactivate OCFM
 
     CS-->>OCFM: @EventListener(CouponUsedEvent)
     activate OCFM
-    OCFM->>OS: markCouponUsedWithLock(orderId)
-    activate OS
-    OS->>OS: SELECT * FROM orders<br/>WHERE order_id = ?<br/>FOR UPDATE
-    Note over OS: 비관적 락 획득
-    OS->>OS: UPDATE orders<br/>SET is_coupon_used = true
-    OS->>OS: isReadyForPayment()?<br/>(isStockReserved && <br/>(isCouponUsed == null || isCouponUsed))
-    OS-->>OCFM: true (결제 준비 완료)
-    deactivate OS
+    OCFM->>OCFM: Redis HSET<br/>order:event:tracker:{orderId}<br/>couponUsed = true
+    OCFM->>OCFM: Redis HGETALL로<br/>isReadyForPayment() 체크
+    Note over OCFM: stockReserved=true && <br/>couponUsed=true?
+    OCFM-->>OCFM: true (결제 준비 완료)
+    OCFM->>OS: findById(orderId)<br/>결제 정보 조회
+    OS-->>OCFM: Order 정보
     OCFM->>OCFM: publish(ProcessPaymentEvent)
-    Note over OCFM: 트랜잭션 커밋 & 락 해제
+    Note over OCFM: 결제 진행
     deactivate OCFM
 
     Note over Client,EDP: 4. FlowManager가 결제 이벤트 수신 및 처리
@@ -140,8 +136,14 @@ sequenceDiagram
     Note over Client,EDP: 6. FlowManager가 주문 완료 후처리
 
     OCFM-->>OCFM: @EventListener(OrderCompletedEvent)
-    OCFM->>EDP: sendOrderDataAsync(orderId)
     OCFM->>OCFM: 인기 상품 점수 증가 처리
+    OCFM->>OCFM: publish(SendOrderDataEvent)
+    Note over OCFM: 외부 데이터 전송 이벤트 발행
+    OCFM->>OCFM: Redis 이벤트 추적 데이터 삭제
+
+    OCFM-->>EDPC: @KafkaListener(SendOrderDataEvent)
+    EDPC->>EDP: sendOrderDataAsync(orderId)
+    Note over EDP: 외부 데이터 플랫폼<br/>비동기 전송
 ```
 
 ## 주요 컴포넌트 설명
@@ -172,7 +174,7 @@ sequenceDiagram
   - `@EventListener(CouponFailedEvent.class)` - 쿠폰 실패 수신
   - `@EventListener(ProcessPaymentEvent.class)` - 결제 프로세스 수신
   - `@EventListener(OrderCompletedEvent.class)` - 주문 완료 후처리
-- **집계 로직**: OrderService를 통해 비관적 락으로 플래그 업데이트
+- **집계 로직**: OrderEventTracker(Redis)를 통해 이벤트 수신 여부 추적
 - **결제 조율**: 결제 준비 완료 시 ProcessPaymentEvent 발행 → UserPointService 호출
 - **보상 조율**: 실패 시 CompensateStockCommand, CompensateCouponCommand 발행
 - **후처리**: 주문 완료 시 외부 데이터 플랫폼 전송 및 인기 상품 점수 업데이트
@@ -212,20 +214,41 @@ ProcessPaymentEvent 발행 → 결제 처리
 - **이벤트 발행**: 성공 시 CouponUsedEvent, 실패 시 CouponFailedEvent
 - **보상 처리**: `@EventListener(CompensateCouponCommand.class)` - restoreCoupon() 실행
 
-### 5. OrderService
+### 5. OrderEventTracker (Redis)
+이벤트 추적 서비스 - Redis 기반 이벤트 수신 여부 관리
+
+- **초기화**: initialize(orderId, hasCoupon) - 주문 생성 시 Redis Hash 초기화
+- **재고 예약 표시**: markStockReserved(orderId) - stockReserved = true 설정
+- **쿠폰 사용 표시**: markCouponUsed(orderId) - couponUsed = true 설정
+- **결제 준비 여부**: isReadyForPayment(orderId) - 두 이벤트 완료 여부 확인
+- **Redis 키**: `order:event:tracker:{orderId}` (Hash 타입)
+- **TTL**: 24시간 자동 삭제
+- **역할**: DB와 분리된 이벤트 추적 레이어, 빠른 읽기/쓰기 성능
+
+### 6. OrderService
 상태 관리 서비스 - FlowManager에서 호출
 
 - **주문 생성**: createOrder() - PENDING 상태로 생성 (OrderCreateUseCase에서 호출)
-- **플래그 업데이트**: isStockReserved, isCouponUsed 업데이트 (비관적 락)
 - **상태 변경**: completeOrderPayment(), failOrder()
-- **역할**: 데이터 영속성 관리, 동시성 제어 지원
+- **주문 조회**: findById(orderId) - 결제 정보 조회용
+- **역할**: 비즈니스 데이터 영속성 관리 (이벤트 추적은 Redis로 분리)
 
-### 6. UserPointService
+### 7. UserPointService
 결제 서비스 - FlowManager에서 직접 호출
 
 - **포인트 차감**: use(userId, finalAmount)
 - **동시성 제어**: Redisson 분산락
 - **동기 처리**: Blocking 방식
+
+### 8. SendOrderDataEventKafkaConsumer
+외부 데이터 플랫폼 전송 Consumer - 주문 완료 후 외부 시스템 연동
+
+- **이벤트 구독**: `@KafkaListener(SendOrderDataEvent.class)`
+- **Kafka Topic**: `send-order-data`
+- **Consumer Group**: `external-data-service-group`
+- **처리 내용**: externalDataPlatformService.sendOrderDataAsync(orderId) 호출
+- **역할**: 주문 완료 후 외부 데이터 플랫폼으로 주문 데이터 비동기 전송
+- **실패 처리**: 재시도 로직 또는 Dead Letter Queue 처리 필요 (TODO)
 
 ## 이벤트 목록
 
@@ -236,6 +259,7 @@ ProcessPaymentEvent 발행 → 결제 처리
 - `CouponUsedEvent`: 쿠폰 사용 성공
 - `CouponFailedEvent`: 쿠폰 사용 실패
 - `OrderCompletedEvent`: 주문 완료 (결제 성공)
+- `SendOrderDataEvent`: 외부 데이터 플랫폼 전송 요청
 
 ### 보상 트랜잭션 커맨드
 - `CompensateStockCommand`: 재고 복구 명령
@@ -254,34 +278,33 @@ public void decreaseStockForItem(Long itemId, int quantity)
 - JPA 낙관적 락 (@Version) 활용
 - 동시 사용 시도 시 OptimisticLockException 발생
 
-### 3. 결과 집계 (OrderCreateFlowManager → OrderService)
+### 3. 결과 집계 (OrderCreateFlowManager → OrderEventTracker)
 **처리 순서**:
 1. FlowManager가 StockReservedEvent 또는 CouponUsedEvent 수신
-2. OrderService의 markStockReservedWithLock() 또는 markCouponUsedWithLock() 호출
-3. 비관적 락으로 주문 조회 (`SELECT FOR UPDATE`)
-4. 플래그 업데이트 (`UPDATE is_stock_reserved = true` 또는 `is_coupon_used = true`)
-5. 결제 준비 조건 검사 (`isReadyForPayment()`)
-   ```java
-   // 재고 예약 완료 && (쿠폰 사용 완료 OR 쿠폰 미사용)
-   return isStockReserved && (isCouponUsed == null || Boolean.TRUE.equals(isCouponUsed));
-   ```
-6. 조건 만족 시 FlowManager에서 ProcessPaymentEvent 발행
+2. OrderEventTracker의 markStockReserved() 또는 markCouponUsed() 호출
+3. Redis Hash 업데이트 (`HSET order:event:tracker:{orderId} stockReserved/couponUsed true`)
+4. 결제 준비 조건 검사 (`isReadyForPayment()`)
+5. 조건 만족 시 FlowManager에서 ProcessPaymentEvent 발행
 
 **동시성 제어**:
-- MySQL 비관적 락 (SELECT FOR UPDATE)으로 동일 주문에 대한 Race Condition 방지
-- 두 이벤트가 동시에 도착해도 순차적으로 처리됨
-- 트랜잭션 커밋 후 락 해제
+- Redis의 빠른 읽기/쓰기 성능 활용
+- 이벤트 도착 순서에 무관하게 상태 기반 처리
+- DB 락 없이 이벤트 추적 가능
 
 **결제 준비 조건**:
-- **쿠폰 사용**: `isStockReserved = true` && `isCouponUsed = true`
-- **쿠폰 미사용**: `isStockReserved = true` && `isCouponUsed = null`
-- `isCouponUsed`가 null인 경우는 주문 생성 시 쿠폰을 사용하지 않은 경우
+- **쿠폰 사용**: `stockReserved = "true"` && `couponUsed = "true"` (Redis Hash)
+- **쿠폰 미사용**: `stockReserved = "true"` && `couponUsed = "true"` (초기화 시 true로 설정)
+- Redis에서 초기화 시 쿠폰이 없으면 `couponUsed = "true"`로 설정
+
+**Redis 키 구조**:
+```
+order:event:tracker:{orderId} (Hash)
+├─ stockReserved: "false" → "true"
+└─ couponUsed: "false" → "true" (쿠폰 없으면 초기값 "true")
+```
 
 ### 4. 포인트 결제 (UserPointService)
-```java
-@DistributedLock(keyResolver = "userPointLockKeyResolver", key = "#userId")
-public void use(Long userId, Integer amount)
-```
+
 - Redisson 분산락으로 동일 userId에 대한 동시 접근 제어
 - 동시에 여러 주문이 같은 사용자의 포인트를 차감하려 할 때 순차적으로 처리
 - 동기 처리 방식으로 결제 성공/실패를 즉시 반환
@@ -303,10 +326,10 @@ PENDING → PAID (성공)
 
 ### Scenario 1: 정상 처리
 ```
-시간 0s: 주문 생성 (PENDING)
-시간 1s: StockReservedEvent 도착 → isStockReserved = true
-시간 2s: CouponUsedEvent 도착 → isCouponUsed = true
-        → 결제 진입 → PAID
+시간 0s: 주문 생성 (PENDING) + Redis 초기화 (stockReserved=false, couponUsed=false)
+시간 1s: StockReservedEvent 도착 → Redis stockReserved = "true"
+시간 2s: CouponUsedEvent 도착 → Redis couponUsed = "true"
+        → isReadyForPayment() = true → 결제 진입 → PAID
 ```
 
 ### Scenario 2: 재고 실패
@@ -339,9 +362,11 @@ PENDING → PAID (성공)
 1. **비동기 병렬 처리**: 재고/쿠폰 처리가 동시에 진행되어 성능 향상
 2. **느슨한 결합**: 각 도메인 서비스가 독립적으로 동작
 3. **확장성**: 새로운 처리 단계 추가 용이
-4. **안정성**: 비관적 락으로 데이터 일관성 보장
-5. **복원력**: 보상 트랜잭션으로 실패 시 자동 롤백
-6. **부분 실패 감지**: 한쪽만 성공한 케이스도 정확히 보상
+4. **관심사 분리**: DB는 비즈니스 데이터, Redis는 이벤트 추적으로 역할 분리
+5. **성능 최적화**: Redis의 빠른 읽기/쓰기로 DB 락 경합 없이 이벤트 집계
+6. **복원력**: 보상 트랜잭션으로 실패 시 자동 롤백
+7. **부분 실패 감지**: 한쪽만 성공한 케이스도 정확히 보상
+8. **자동 정리**: Redis TTL로 임시 이벤트 추적 데이터 자동 삭제
 
 ## 주의사항
 

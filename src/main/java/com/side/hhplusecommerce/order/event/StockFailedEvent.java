@@ -1,16 +1,17 @@
 package com.side.hhplusecommerce.order.event;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class StockFailedEvent {
-    private final Long orderId;
-    private final String reason;
-
-    private StockFailedEvent(Long orderId, String reason) {
-        this.orderId = orderId;
-        this.reason = reason;
-    }
+    private Long orderId;
+    private String reason;
 
     public static StockFailedEvent of(Long orderId, String reason) {
         return new StockFailedEvent(orderId, reason);

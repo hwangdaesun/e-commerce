@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import static com.side.hhplusecommerce.coupon.infrastructure.redis.CouponIssueQueueConstants.*;
+import static com.side.hhplusecommerce.coupon.infrastructure.kafka.CouponIssueKafkaConstants.*;
 
 /**
  * Redis 기반 쿠폰 재고 관리 서비스
