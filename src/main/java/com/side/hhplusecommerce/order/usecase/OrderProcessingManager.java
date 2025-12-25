@@ -3,6 +3,7 @@ package com.side.hhplusecommerce.order.usecase;
 import com.side.hhplusecommerce.item.service.ItemPopularityService;
 import com.side.hhplusecommerce.order.domain.Order;
 import com.side.hhplusecommerce.order.domain.OrderItem;
+import com.side.hhplusecommerce.order.domain.OrderStatus;
 import com.side.hhplusecommerce.order.event.CompensateCouponCommand;
 import com.side.hhplusecommerce.order.event.CompensateStockCommand;
 import com.side.hhplusecommerce.order.event.CouponFailedEvent;
@@ -182,20 +183,30 @@ public class OrderProcessingManager {
 
     /**
      * OrderCompletedEvent 처리 - 주문 완료 후처리 (비동기)
+     *
+     * 멱등성 보장: 중복 이벤트 처리 시에도 안전하게 동작
      */
     public void handleOrderCompletedEvent(OrderCompletedEvent event) {
         log.info("OrderCompletedEvent received: orderId={}", event.getOrderId());
 
         Order order = orderService.findById(event.getOrderId());
+
+        // 중복 처리 방지: 이미 PAID 상태면 후처리 작업 스킵
+        if (order.getStatus() == OrderStatus.PAID) {
+            log.info("Already processed order, skipping: orderId={}", event.getOrderId());
+            return;
+        }
+
+        // 주문 상태 업데이트
         order.completePay();
 
-        // 후처리 작업: 인기 상품 점수 증가
+        // 후처리 작업: 인기 상품 점수 증가 (한 번만 실행됨)
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(event.getOrderId());
         orderItems.forEach(orderItem ->
             itemPopularityService.incrementSalesScore(orderItem.getItemId())
         );
 
-        // 외부 데이터 플랫폼 전송 이벤트 발행 (Kafka)
+        // 외부 데이터 플랫폼 전송 이벤트 발행 (Kafka) (한 번만 실행됨)
         SendOrderDataEvent sendDataEvent = SendOrderDataEvent.of(event.getOrderId());
         kafkaProducer.publish(TOPIC_SEND_ORDER_DATA, event.getOrderId().toString(), sendDataEvent);
         log.info("SendOrderDataEvent 발행: orderId={}", event.getOrderId());
