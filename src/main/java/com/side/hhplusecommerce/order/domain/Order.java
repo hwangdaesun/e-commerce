@@ -84,8 +84,10 @@ public class Order extends BaseEntity {
     }
 
     public void completePay() {
+        // 멱등성 보장: 이미 PAID 상태면 예외를 던지지 않고 무시
+        // Kafka Consumer 재시도 시 중복 처리 방지
         if (this.status.equals(OrderStatus.PAID)) {
-            throw new AlreadyPaidOrderException();
+            return;  // 이미 처리됨 - 안전하게 리턴
         }
         this.status = OrderStatus.PAID;
     }
