@@ -79,16 +79,18 @@ class OrderTest {
     }
 
     @Test
-    @DisplayName("PAID 상태의 주문은 다시 결제 완료 처리할 수 없다")
-    void complete_pay_from_paid_fails() {
+    @DisplayName("PAID 상태의 주문을 다시 결제 완료 처리해도 예외가 발생하지 않는다 (멱등성 보장)")
+    void complete_pay_from_paid_is_idempotent() {
         // given
         Order order = Order.create(1L, 1L, 10000, 0);
         order.completePay();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
 
-        // when & then
-        assertThatThrownBy(order::completePay)
-                .isInstanceOf(AlreadyPaidOrderException.class)
-                .hasMessage(ErrorCode.ALREADY_PAID_ORDER.getMessage());
+        // when - 중복 호출
+        order.completePay();
+
+        // then - 예외 없이 여전히 PAID 상태
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
     }
 
     @Test

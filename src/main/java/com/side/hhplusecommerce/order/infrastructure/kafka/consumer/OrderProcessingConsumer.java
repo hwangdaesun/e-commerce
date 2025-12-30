@@ -161,6 +161,10 @@ public class OrderProcessingConsumer {
 
     /**
      * OrderCompletedEvent 수신
+     *
+     * 멱등성 보장: 중복 메시지 처리 시에도 안전하게 동작
+     * - 이미 처리된 주문은 handleOrderCompletedEvent에서 조기 리턴
+     * - 처리 중 예외 발생 시에도 적절한 ACK 처리로 무한 재시도 방지
      */
     @KafkaListener(
             topics = TOPIC_ORDER_COMPLETED,
@@ -183,6 +187,14 @@ public class OrderProcessingConsumer {
             }
         } catch (Exception e) {
             log.error("OrderCompletedEvent 처리 실패: orderId={}", event.getOrderId(), e);
+
+            // 예외 발생 시에도 ACK 처리하여 무한 재시도 방지
+            // 멱등성이 보장되므로 재처리 시 안전하며,
+            // 일시적 장애는 다른 메커니즘(모니터링/알람)으로 대응
+            if (acknowledgment != null) {
+                acknowledgment.acknowledge();
+                log.warn("예외 발생했지만 무한 재시도 방지를 위해 ACK 처리: orderId={}", event.getOrderId());
+            }
         }
     }
 }

@@ -1,0 +1,61 @@
+# Prometheus 설정 파일
+# hhplus-e-commerce 모니터링 시스템
+
+global:
+  scrape_interval: 15s      # 기본 스크래핑 간격
+  evaluation_interval: 15s  # 규칙 평가 간격
+  external_labels:
+    monitor: 'hhplus-ecommerce-monitor'
+    environment: 'development'
+
+# Alertmanager 설정 (선택사항)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# 규칙 파일 로드 (선택사항)
+# rule_files:
+#   - "alerts/*.yml"
+
+# 스크래핑 대상 설정
+scrape_configs:
+  # Prometheus 자체 모니터링
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Spring Boot 애플리케이션 모니터링
+  - job_name: 'hhplus-ecommerce'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          application: 'hhplus-ecommerce'
+          service: 'spring-boot-app'
+          environment: 'development'
+
+  # MySQL Exporter (선택사항 - 추후 추가 가능)
+  # - job_name: 'mysql'
+  #   static_configs:
+  #     - targets: ['mysql-exporter:9104']
+  #       labels:
+  #         service: 'mysql'
+
+  # Redis Exporter (선택사항 - 추후 추가 가능)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+  #       labels:
+  #         service: 'redis'
+
+  # Kafka Exporter (선택사항 - 추후 추가 가능)
+  # - job_name: 'kafka'
+  #   static_configs:
+  #     - targets: ['kafka-exporter:9308']
+  #       labels:
+  #         service: 'kafka'
